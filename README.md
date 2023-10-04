@@ -1,2 +1,2 @@
-# GCtfFind
-GPU accelerated software package for CTF estimation of cryoEM micrographs and cryoET tilt series
+# GCTFFind
+GPU based application that estimates CTF for cryoEM and cryoET and performs the correction in future. 
