@@ -1,5 +1,4 @@
-HOMEDIR = $(shell pwd)/../..
-PRJHOME = $(HOMEDIR)/CuProjs/GCTFFind
+PRJHOME = $(shell pwd)
 CUDAHOME = $(HOME)/nvidia/cuda-10.2
 CUDAINC = $(CUDAHOME)/include
 CUDALIB = $(CUDAHOME)/lib64
