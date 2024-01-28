@@ -99,7 +99,7 @@ void CInput::ShowTags(void)
 	printf("%-15s\n"
           "  1. Tile size in pixels.\n\n", m_acTileSizeTag);
 	printf("%-15s\n"
-	  "  1. Calculate logrithmic spectrum. It is not enabled by default.\n\n",
+	  "  1. Calculate logarithmic spectrum. It is not enabled by default.\n\n",
 	   m_acLogSpectTag);
 	printf("%-15s\n"
 	  "  1. Image or tilt series with their file names ended with the\n" 
