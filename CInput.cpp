@@ -112,8 +112,7 @@ void CInput::ShowTags(void)
 	  "  2. -Serial 1 enables serial processing.\n\n", m_acSerialTag);
 	printf("%-15s\n"
           "  1. GPU IDs. Default 0.\n"
-          "  2. For multiple GPUs, separate IDs by space.\n"
-          "     For example, %s 0 1 2 3 specifies 4 GPUs.\n\n", m_acGpuIDTag);
+	  "  2. User can choose any other number.\n", m_acGpuIDTag);
 }
 
 void CInput::Parse(int argc, char* argv[])
