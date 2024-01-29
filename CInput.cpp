@@ -64,10 +64,10 @@ CInput::~CInput(void)
 
 void CInput::ShowTags(void)
 {
-	printf("%-15s: \n"
+	printf("%-15s\n"
 	  "  1. Input MRC file that contains single image or a stack of\n"
 	  "     frames. In the latter case, CTF will be estimated for \n"
-	  "     each fraome.\n\n", m_acInMrcTag);
+	  "     each frame.\n\n", m_acInMrcTag);
 	printf("%-15s\n"
 	  "  1. Output MRC file that contains the averaged\n"
 	  "     amplitude spectrum.\n"
@@ -97,17 +97,22 @@ void CInput::ShowTags(void)
 	  "  1. Extra phase shift and search range in degree.\n\n", 
 	   m_acExtPhaseTag);
 	printf("%-15s\n"
-	  "  1. Calculate logrithmic spectrum. It is not enabled "
-	  "     by default.\n\n", m_acLogSpectTag);
+          "  1. Tile size in pixels.\n\n", m_acTileSizeTag);
+	printf("%-15s\n"
+	  "  1. Calculate logarithmic spectrum. It is not enabled by default.\n\n",
+	   m_acLogSpectTag);
 	printf("%-15s\n"
 	  "  1. Image or tilt series with their file names ended with the\n" 
 	  "     specified suffix will be loaded for CTF estimation.\n"
 	  "  2. In this case, -InMrc and -InSuffix are jointly used to\n"
 	  "     to screen files for CTF estimation.\n\n", m_acInSuffixTag);
 	printf("%-15s\n"
-	  "  1. Enale serial CTS estimation where there are multiple files\n"
+	  "  1. Enable serial CTS estimation where there are multiple files\n"
 	  "     to be processed.\n"
-	  "  2. -Serial 1 enables serial processing.\n\n", m_acSerialTag);	
+	  "  2. -Serial 1 enables serial processing.\n\n", m_acSerialTag);
+	printf("%-15s\n"
+          "  1. GPU IDs. Default 0.\n"
+	  "  2. User can choose any other number.\n", m_acGpuIDTag);
 }
 
 void CInput::Parse(int argc, char* argv[])
