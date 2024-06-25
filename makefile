@@ -76,6 +76,7 @@ exe: $(OBJS)
 	$(PRJLIB)/libcuutil.a \
 	$(PRJLIB)/libcuutilfft.a \
 	-L$(CUDALIB) -L/usr/lib64 \
+	-no-pie \
 	-lcufft -lcudart -lcuda -lc -lm -lpthread \
 	-o GCtfFind
 	@echo GCtfFind has been generated.
