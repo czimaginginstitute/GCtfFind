@@ -155,7 +155,8 @@ public:
 	void GenFullSpect
 	( float* gfHalfSpect,
 	  int* piCmpSize,
-	  float* gfFullSpect
+	  float* gfFullSpect,
+	  bool bFullPadded
 	);
 };
 
@@ -315,6 +316,7 @@ private:
 	void mGenAvgSpectrum(void);
 	void mCalcTileSpectrum(int iTile);
 	void mExtractPadTile(int iTile);
+	//-----------------
 	GCalcMoment2D* m_pGCalcMoment2D;
 	float* m_pfImage;
 	int m_aiImgSize[2];
@@ -328,6 +330,35 @@ private:
 	float* m_gfTileSpect;
 	float* m_gfPadTile;
 	bool m_bLogSpect;
+};
+
+class GLowpass2D
+{
+public:
+	GLowpass2D(void);
+	~GLowpass2D(void);
+	void DoBFactor
+	( cufftComplex* gInCmp,
+	  cufftComplex* gOutCmp,
+	  int* piCmpSize,
+	  float fBFactor
+	);
+	cufftComplex* DoBFactor
+	( cufftComplex* gCmp,
+	  int* piCmpSize,
+	  float fBFactor
+	);
+	void DoCutoff
+	( cufftComplex* gInCmp,
+	  cufftComplex* gOutCmp,
+	  int* piCmpSize,
+	  float fCutoff
+	);
+	cufftComplex* DoCutoff
+	( cufftComplex* gCmp,
+	  int* piCmpSize,
+	  float fCutoff
+	);
 };
 
 class CCalcBackground
@@ -472,7 +503,9 @@ public:
 	float m_fScore;
 protected:
 	void mRemoveBackground(void);
+	void mLowpass(void);
 	void mInitPointers(void);
+	//-----------------
 	CCTFTheory* m_pCtfTheory;
 	CGenAvgSpectrum* m_pGenAvgSpect;
 	float* m_gfFullSpect;

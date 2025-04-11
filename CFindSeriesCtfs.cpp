@@ -102,8 +102,13 @@ void CFindSeriesCtfs::mProcessPackage(int iPackage)
 	pFindCtf2D->GenHalfSpectrum(m_pPackage->m_pfImage);
 	//-------------------------------------------------
 	//if(iPackage == 0 || !pInputFolder->IsTomo()) mProcessFull();
-	if(iPackage == 0) mProcessFull();
-	else mProcessRefine();
+	if(iPackage == 0) 
+	{	mProcessFull();
+	}
+	else 
+	{	mProcessRefine();
+		if(m_pPackage->m_fScore <= 0) mProcessFull();
+	}
 	//--------------------
 	mDisplay();
 	//---------

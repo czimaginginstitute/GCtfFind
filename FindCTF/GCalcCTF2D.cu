@@ -22,18 +22,18 @@ static __global__ void mGCalculate
 )
 {	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	if(y >= iCmpY) return;
-	//--------------------------------------------
+	//-----------------
 	float fX = blockIdx.x * 0.5f / (gridDim.x - 1);
 	float fY = (y - iCmpY / 2) / (float)iCmpY;
 	float fS2 = fX * fX + fY * fY;
 	float fW2 = s_gfCtfParam[0] * s_gfCtfParam[0];
-	//--------------------------------------------
+	//-----------------
 	fX = atanf(fY / (fX + (float)1e-30));
 	fX = fDfMean + fDfSigma * cosf(2.0f * (fX - fAzimuth));
-	//-----------------------------------------------------
+	//-----------------
 	fX = -sinf(fExtPhase + 3.1415926f * s_gfCtfParam[0] * fS2
 	   * (fX - 0.5f * fW2 * fW2 * s_gfCtfParam[1]));
-	//----------------------------------------------
+	//-----------------
 	gfCTF2D[y * gridDim.x + blockIdx.x] = fX * fX;
 }
 
@@ -90,8 +90,8 @@ void GCalcCTF2D::SetParam(CCTFParam* pCtfParam)
 	afCtfParam[0] = pCtfParam->m_fWavelength;
 	afCtfParam[1] = pCtfParam->m_fCs;
 	cudaMemcpyToSymbol(s_gfCtfParam, afCtfParam, sizeof(float) * 2);
-	//--------------------------------------------------------------
-	m_fAmpPhase = (float)atanf(pCtfParam->m_fAmpContrast / (1.0f 
+	//-----------------
+	m_fAmpPhase = (float)atanf(pCtfParam->m_fAmpContrast / sqrtf(1.0f 
 	   - pCtfParam->m_fAmpContrast * pCtfParam->m_fAmpContrast));
 }
 

@@ -2,6 +2,7 @@
 #include "../CMainInc.h"
 #include "../Util/CUtilInc.h"
 #include "../MrcUtil/CMrcUtilInc.h"
+#include <CuUtilFFT/GFFT2D.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -176,12 +177,44 @@ void CFindCtfBase::mRemoveBackground(void)
 	float fMin = fMean - 1.0f * fStd;
 	float fMax = fMean + 1.0f * fStd;
 	GThreshold2D threshold2D;
-	threshold2D.DoIt(m_gfCtfSpect, fMin, fMax, m_aiCmpSize, false);
-	/*
+	//threshold2D.DoIt(m_gfCtfSpect, fMin, fMax, m_aiCmpSize, false);
+	//-----------------
+	mLowpass();
+	/*	
 	CSaveImages saveImages;
 	saveImages.OpenFile("/home/shawn.zheng/Temp/TestRm.mrc");
 	saveImages.Setup(m_aiCmpSize, 1);
 	saveImages.DoIt(0, m_gfCtfSpect, true);
 	*/
+}
+
+void CFindCtfBase::mLowpass(void)
+{
+	GCalcSpectrum calcSpectrum;
+	bool bFullPadded = true;
+	calcSpectrum.GenFullSpect(m_gfCtfSpect, m_aiCmpSize,
+	   m_gfFullSpect, bFullPadded);
+	//-----------------
+	CuUtilFFT::GFFT2D aGFFT2D;
+	int aiFFTSize[] = {(m_aiCmpSize[0] - 1) * 2, m_aiCmpSize[1]};
+	aGFFT2D.CreatePlan(aiFFTSize, true);
+	aGFFT2D.Forward(m_gfFullSpect, true);
+	//-----------------
+	GLowpass2D lowpass2D;
+	cufftComplex* gCmpFullSpect = (cufftComplex*)m_gfFullSpect;
+	lowpass2D.DoBFactor(gCmpFullSpect, gCmpFullSpect,
+	   m_aiCmpSize, 10.0f);
+	//-----------------
+	aGFFT2D.CreatePlan(aiFFTSize, false);
+	aGFFT2D.Inverse(gCmpFullSpect);
+	//-----------------
+	int iFullSizeX = m_aiCmpSize[0] * 2;
+	int iHalfX = m_aiCmpSize[0] - 1;
+	size_t tBytes = sizeof(float) * m_aiCmpSize[0];
+	for(int y=0; y<m_aiCmpSize[1]; y++)
+	{	float* gfSrc = m_gfFullSpect + y * iFullSizeX + iHalfX;
+		float* gfDst = m_gfCtfSpect + y * m_aiCmpSize[0];
+		cudaMemcpy(gfDst, gfSrc, tBytes, cudaMemcpyDefault);
+        }
 }
 

@@ -30,4 +30,17 @@ Version 1.0.4
 Version 1.0.5
 -------------
 1. FindCtf/CFindSeriesCtfs::mProcessRefin:
-   Added fDfRange = 5000 * pixel_size * pixel_size 
+   Added fDfRange = 5000 * pixel_size * pixel_size
+
+Version 1.0.6
+-------------
+1. Add lowpass filter and apply it to the background removed spectrum.
+
+Version 1.0.7
+-------------
+Bug Fix:
+1. FindCtf/GCalcCTF1D at line 30: should be 0.5f * fw2 * fs2.
+   FindCtf/GCalcCTF1D at line 50: added sqrtf.
+2. FindCtf/GCalcCTF2D at line 35: should be 0.5f * fW2 * fS2.
+   FindCtf/GCalcCTF2D at line 94: added sqrtf.
+3. Revised makefile for new environment setting 

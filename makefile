@@ -1,5 +1,6 @@
 PRJHOME = $(shell pwd)
-CUDAHOME = $(HOME)/nvidia/cuda-12.0
+CONDA = $(HOME)/miniconda3
+CUDAHOME = $(HOME)/nvidia/cuda-12.1
 CUDAINC = $(CUDAHOME)/include
 CUDALIB = $(CUDAHOME)/lib64
 PRJINC = $(PRJHOME)/Include
@@ -18,7 +19,8 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GRemoveMean.cu \
 	 ./FindCTF/GRoundEdge.cu \
 	 ./FindCTF/GCC1D.cu \
-	 ./FindCTF/GCC2D.cu
+	 ./FindCTF/GCC2D.cu \
+	 ./FindCTF/GLowpass2D.cu
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
@@ -54,7 +56,7 @@ OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 #-------------------------------------
 CC = g++
 CFLAG = -c -g -pthread -m64
-NVCC = nvcc
+NVCC = $(CUDAHOME)/bin/nvcc -std=c++11
 CUFLAG = -Xptxas -dlcm=ca -O2 \
 	-gencode arch=compute_52,code=sm_52 \
 	-gencode arch=compute_53,code=sm_53 \

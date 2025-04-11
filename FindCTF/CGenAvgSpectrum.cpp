@@ -1,6 +1,7 @@
 #include "CFindCTFInc.h"
 #include "../Util/CUtilInc.h"
 #include "../MrcUtil/CMrcUtilInc.h"
+#include <CuUtilFFT/GFFT2D.h>
 #include <math.h>
 #include <stdio.h>
 #include <memory.h>
@@ -94,7 +95,7 @@ void CGenAvgSpectrum::DoIt
 		aGAddImages.DoIt(m_gfAvgSpect, 1.0f, m_gfTileSpect, 
 		   fFactor2, m_gfAvgSpect, m_aiCmpSize);
 	}
-	/*
+	/*	
 	s_aSaveImages.OpenFile("/home/shawn.zheng/Temp/TestAvg.mrc");
 	s_aSaveImages.Setup(m_aiCmpSize, 1);
 	s_aSaveImages.DoIt(0, m_gfAvgSpect, true);
@@ -134,4 +135,5 @@ void CGenAvgSpectrum::mExtractPadTile(int iTile)
 		float* gfDst = m_gfPadTile + y * m_aiPadSize[0];
 		cudaMemcpy(gfDst, pfSrc, tBytes, cudaMemcpyDefault);
 	}
-}	
+}
+
