@@ -43,4 +43,10 @@ Bug Fix:
    FindCtf/GCalcCTF1D at line 50: added sqrtf.
 2. FindCtf/GCalcCTF2D at line 35: should be 0.5f * fW2 * fS2.
    FindCtf/GCalcCTF2D at line 94: added sqrtf.
-3. Revised makefile for new environment setting 
+3. Revised makefile for new environment setting
+
+Version 1.0.8 [04-11-2025]
+--------------------------
+Bug fix:
+Changes:
+1. Ported AreTomo3's implementation of FindCtf in GCtfFind.

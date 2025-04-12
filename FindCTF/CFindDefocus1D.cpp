@@ -1,6 +1,4 @@
 #include "CFindCTFInc.h"
-#include "../Util/CUtilInc.h"
-#include <CuUtilFFT/GFFT1D.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +12,7 @@ static float s_fD2R = 0.0174533f;
 
 CFindDefocus1D::CFindDefocus1D(void)
 {
-	m_gfCTF1D = 0L;
+	m_gfCtf1D = 0L;
 	m_pGCC1D = 0L;
 }
 
@@ -25,9 +23,9 @@ CFindDefocus1D::~CFindDefocus1D(void)
 
 void CFindDefocus1D::Clean(void)
 {
-	if(m_gfCTF1D != 0L) 
-	{	cudaFree(m_gfCTF1D);
-		m_gfCTF1D = 0L;
+	if(m_gfCtf1D != 0L) 
+	{	cudaFree(m_gfCtf1D);
+		m_gfCtf1D = 0L;
 	}
 	if(m_pGCC1D != 0L)
 	{	delete m_pGCC1D;
@@ -38,13 +36,13 @@ void CFindDefocus1D::Clean(void)
 void CFindDefocus1D::Setup(CCTFParam* pCtfParam, int iCmpSize)
 {
 	this->Clean();
-	//------------
+	//-----------------
 	m_pCtfParam = pCtfParam;
 	m_iCmpSize = iCmpSize;
-	//----------------------
+	//-----------------
 	m_aGCalcCTF1D.SetParam(m_pCtfParam);
-	cudaMalloc(&m_gfCTF1D, sizeof(float) * m_iCmpSize);
-	//-------------------------------------------------
+	cudaMalloc(&m_gfCtf1D, sizeof(float) * m_iCmpSize);
+	//-----------------
 	m_pGCC1D = new GCC1D;
 	m_pGCC1D->SetSize(m_iCmpSize);	
 }
@@ -72,26 +70,37 @@ void CFindDefocus1D::DoIt
 	m_fMaxCC = afResult[2];
 }
 
+//--------------------------------------------------------------------
+// Search both defocus and phase shift.
+//--------------------------------------------------------------------
 void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 {	
 	int iDfSteps = 501;
-	float fDfStep = (m_afDfRange[1] - m_afDfRange[0]) / (iDfSteps - 1);	
+	float fDfRange = m_afDfRange[1] - m_afDfRange[0];
+	float fDfStep = fDfRange / (iDfSteps - 1);
+	if(fDfStep < 50) fDfStep = 50.0f;
+	iDfSteps = (int)(fDfRange / fDfStep) / 2 * 2 + 1;
 	//-----------------
-	float fPhaseRange = m_afPhaseRange[1] - m_afPhaseRange[0];
-	int iPsSteps = (fPhaseRange > 0) ? 61 : 1;
-	float fPsStep = fPhaseRange / (iPsSteps - 1 + 0.0000001f);
-	//---------------------------------------------------
+	int iPsSteps = 37;
+	float fPsStep = m_afPhaseRange[1] / (iPsSteps - 1);
+	if(fPsStep < 2) fPsStep = 2.0f;
+	iPsSteps = (int)(m_afPhaseRange[1] / fPsStep) / 2 * 2 + 1;
+	//-----------------
 	int iPoints = iDfSteps * iPsSteps;
 	float* pfCCs = new float[iPoints];
-	//--------------------------------
+	//-----------------
+	float fDefocus, fPhase;
 	int iFocus = 0, iPhase = 0;
 	afResult[2] = (float)-1e20;
 	//-----------------
 	for(int i=0; i<iPoints; i++)
 	{	iFocus = i % iDfSteps;
 		iPhase = i / iDfSteps;
-		float fDefocus = m_afDfRange[0] + iFocus * fDfStep;
-		float fPhase = m_afPhaseRange[0] + iPhase * fPsStep;
+		fDefocus = m_afDfRange[0] + iFocus * fDfStep;
+		fPhase = m_afPhaseRange[0] + (iPhase - iPsSteps / 2) * fPsStep;
+		if(fPhase < 0) fPhase = 0.0f;
+		else if(fPhase > 150.0f) fPhase = 150.0f;
+		//----------------
 		mCalcCTF(fDefocus, fPhase);
 		pfCCs[i] = mCorrelate();
 		if(pfCCs[i] > afResult[2])
@@ -99,11 +108,11 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 			afResult[1] = fPhase;
 			afResult[2] = pfCCs[i];
 		}
-		/*
-		printf("%3d  %8.2f  %8.2f  %8.4f  %8.2f %8.2f  %8.4f\n", i, 
-		   fDefocus, fPhase, pfCCs[i], 
+		/*		
+		printf("%3d  %8.2f  %8.2f  %8.4f  %8.2f %8.2f  %8.4f\n", i,
+		   fDefocus, fPhase, pfCCs[i],
 		   afResult[0], afResult[1], afResult[2]);
-		*/ 
+		*/
 	}
 	if(pfCCs != 0L) delete[] pfCCs;
 }
@@ -112,7 +121,7 @@ void CFindDefocus1D::mCalcCTF(float fDefocus, float fExtPhase)
 {
 	fExtPhase *= s_fD2R;
 	float fPixDefocus = fDefocus / m_pCtfParam->m_fPixelSize;
-	m_aGCalcCTF1D.DoIt(fPixDefocus, fExtPhase, m_gfCTF1D, m_iCmpSize);
+	m_aGCalcCTF1D.DoIt(fPixDefocus, fExtPhase, m_gfCtf1D, m_iCmpSize);
 }
 
 float CFindDefocus1D::mCorrelate(void)
@@ -122,6 +131,6 @@ float CFindDefocus1D::mCorrelate(void)
 	float fMaxFreq = fRes1 / m_afResRange[1];
 	//---------------------------------------
 	m_pGCC1D->Setup(fMinFreq, fMaxFreq, 0.0f);
-	float fCC = m_pGCC1D->DoIt(m_gfCTF1D, m_gfRadialAvg);
+	float fCC = m_pGCC1D->DoIt(m_gfCtf1D, m_gfRadialAvg);
 	return fCC;
 }

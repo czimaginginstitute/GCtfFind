@@ -160,6 +160,20 @@ public:
 	);
 };
 
+class GSpectralCC2D
+{
+public:
+	GSpectralCC2D(void);
+	~GSpectralCC2D(void);
+	void SetSize(int* piSpectSize);
+	int DoIt(float* gfCTF, float* gfSpect);
+private:
+	int m_aiSpectSize[2];
+	float* m_gfCC;
+	float* m_pfCC;
+};
+
+
 class GBackground1D
 {
 public:
@@ -431,7 +445,7 @@ private:
 	float m_afPhaseRange[2]; // p0, delta in degree
 	float* m_gfRadialAvg;
 	int m_iCmpSize;
-	float* m_gfCTF1D;
+	float* m_gfCtf1D;
 };
 
 class CFindDefocus2D 
@@ -446,38 +460,58 @@ public:
 	( float fDfMean, float fAstRatio, 
 	  float fAstAngle, float fExtPhase
 	);
-	void DoIt(float* gfSpect, float fPhaseRange);
+	//---------------------------
+	void DoIt
+	( float* gfSpect, 
+	  float fPhaseRange
+	);
 	void Refine
 	( float* gfSpect, float fDfMeanRange,
 	  float fAstRange, float fAngRange,
 	  float fPhaseRange
 	);
+	//---------------------------
 	float GetDfMin(void);    // angstrom
 	float GetDfMax(void);    // angstrom
 	float GetAstRatio(void);
 	float GetAngle(void);    // degree
 	float GetExtPhase(void); // degree
 	float GetScore(void);
+	float GetCtfRes(void);   // angstrom
 private:
-	float mIterate
-	( float afAstRanges[2], float fDfMeanRange,
-	  float fPhaseRange, int iIterations
-	);
-	float mGridSearch(float fRatRange, float fAngRange);
+	void mIterate(void);
+	float mFindAstig(float* pfAstRange, float* pfAngRange);
+	float mRefineAstMag(float fAstRange);
+	float mRefineAstAng(float fAngRange);
+	float mRefineDfMean(float fDfRange);
 	float mRefinePhase(float fPhaseRange);
-	float mRefineDfMean(float fRatRange);
+	//---------------------------
 	float mCorrelate(float fAzimu, float fAstig, float fExtPhase);
+	void mCalcCtfRes(void);
+	//---------------------------
+	void mGetRange
+	( float fCentVal, float fRange,
+	  float* pfMinMax, float* pfRange
+	);
+	//---------------------------
 	float* m_gfSpect;
-	float* m_gfCTF2D;
+	float* m_gfCtf2D;
 	int m_aiCmpSize[2];
 	GCC2D* m_pGCC2D;
-	GCalcCTF2D m_aGCalcCTF2D;
+	GCalcCTF2D m_aGCalcCtf2D;
 	CCTFParam* m_pCtfParam;
+	//---------------------------
 	float m_fDfMean;
 	float m_fAstRatio;
 	float m_fAstAngle;
 	float m_fExtPhase;
+	float m_fCtfRes;    // angstrom
 	float m_fCCMax;
+	//---------------------------
+	float m_afPhaseRange[2];
+	float m_afDfRange[2];
+	float m_afAstRange[2];
+	float m_afAngRange[2];
 };
 
 class CFindCtfBase
