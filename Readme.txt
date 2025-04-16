@@ -50,3 +50,5 @@ Version 1.0.8 [04-11-2025]
 Bug fix:
 Changes:
 1. Ported AreTomo3's implementation of FindCtf in GCtfFind.
+2. Reduced the lowpass strength in CFindDefocus2D.cpp from 100 to 40 to account
+   for more high-freq signals, important for phase shift estimation.
