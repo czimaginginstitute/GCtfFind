@@ -23,7 +23,7 @@ public:
 	float m_fKv;
 	float m_fCs;
 	float m_fAmpContrast;
-	float m_fPixelSize;
+	float m_fPixSize;
 	float m_afExtPhase[2];
 	float m_afTiltRange[2];
 	int m_iTileSize;
@@ -136,14 +136,19 @@ public:
 	void DoIt(void);
 private:
 	CFindSeriesCtfs(void);
+	void mRescaleImage(int iPackage);
+	void mSetupFindCtf(void);
 	void mProcessPackage(int iPackage);
 	void mProcessFull(void);
 	void mProcessRefine(void);
 	void mGetResults(void);
 	void mDisplay(void);
+	//---------------------------
 	CCtfPackage* m_pRefPackage;
 	CCtfPackage* m_pPackage;
 	void* m_pvFindCtf2D;
+	void* m_pvRescaleImg;
+	//---------------------------
 	int m_iNumPackages;
 	int m_iNumDone;
 	static CFindSeriesCtfs* m_pInstance;

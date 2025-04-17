@@ -20,6 +20,7 @@ CFindCtfBase::CFindCtfBase(void)
 	m_fExtPhase = 0.0f;
 	m_fPhaseRange = 0.0f;
 	m_fScore = 0.0f;
+	m_fPixSize = 1.0f;
 	mInitPointers();
 	memset(m_aiImgSize, 0, sizeof(m_aiImgSize));
 }
@@ -47,28 +48,30 @@ void CFindCtfBase::Clean(void)
 void CFindCtfBase::Setup1(CCTFTheory* pCtfTheory)
 {
 	this->Clean();
-	//------------
+	//---------------------------
 	CInput* pInput = CInput::GetInstance();
 	m_aiCmpSize[1] = pInput->m_iTileSize;
 	m_aiCmpSize[0] = m_aiCmpSize[1] / 2 + 1;
 	m_pCtfTheory = pCtfTheory->GetCopy();
-	//-----------------------------------
-        m_afResRange[0] = 20.0f * pInput->m_fPixelSize;
-        m_afResRange[1] = 3.5f * pInput->m_fPixelSize;
-	//--------------------------------------------
+	//---------------------------
 	int iCmpSize = m_aiCmpSize[0] * m_aiCmpSize[1];
 	cudaMalloc(&m_gfFullSpect, sizeof(float) * iCmpSize * 4);
 	m_gfRawSpect = m_gfFullSpect + iCmpSize * 2;
 	m_gfCtfSpect = m_gfFullSpect + iCmpSize * 3;
-	//------------------------------------------
+	//---------------------------
 	m_pGenAvgSpect = new CGenAvgSpectrum;
+	//---------------------------
+	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
+	m_fPixSize = pCtfParam->m_fPixelSize;
+	m_afResRange[0] = 20.0f * m_fPixSize;
+        m_afResRange[1] = 3.5f * m_fPixSize;
 }
 
 void CFindCtfBase::Setup2(int* piImgSize)
 {
 	if(m_aiImgSize[0] == piImgSize[0] && 
 	   m_aiImgSize[1] == piImgSize[1]) return;
-	//----------------------------------------
+	//---------------------------
 	m_aiImgSize[0] = piImgSize[0];
 	m_aiImgSize[1] = piImgSize[1];
 	m_pGenAvgSpect->SetSizes(m_aiImgSize, m_aiCmpSize[1]);
@@ -105,11 +108,12 @@ void CFindCtfBase::GetSpectSize(int* piSize, bool bHalf)
 	if(!bHalf) piSize[0] = (piSize[0] - 1) * 2;
 }
 
-void CFindCtfBase::GenHalfSpectrum(float* pfImage)
+void CFindCtfBase::GenHalfSpectrum(float* gfPadImg)
 {
 	CInput* pInput = CInput::GetInstance();
-	bool bLogSpect = (pInput->m_iLogSpect != 0) ? true : false;	
-	m_pGenAvgSpect->DoIt(pfImage, m_gfRawSpect, bLogSpect);
+	bool bLogSpect = (pInput->m_iLogSpect != 0) ? true : false;
+	//---------------------------
+	m_pGenAvgSpect->DoIt(gfPadImg, m_gfRawSpect, bLogSpect);
 	mRemoveBackground();
 }
 
@@ -157,8 +161,6 @@ void CFindCtfBase::mRemoveBackground(void)
 {
 	CInput* pInput = CInput::GetInstance();
 	bool bLogSpect = (pInput->m_iLogSpect != 0) ? true: false;
-	float fPixelSize = m_pCtfTheory->GetPixelSize();
-	//float fMinRes = fPixelSize / m_afResRange[0];
 	float fMinRes = 1.0f / 15.0f;
 	GRmBackground2D rmBackground;
 	rmBackground.DoIt(m_gfRawSpect, m_gfCtfSpect, bLogSpect,

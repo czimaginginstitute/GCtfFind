@@ -40,6 +40,20 @@ CCTFParam* CCTFParam::GetCopy(void)
 	return pCopy;
 }
 
+void CCTFParam::ChangePixelSize(float fNewPixSize)
+{
+	float fScale = (m_fPixelSize / fNewPixSize);
+	if(fScale == 1.0) return;
+	//---------------------------
+	m_fWavelength *= fScale;
+	m_fCs *= fScale;
+	m_fDefocusMax *= fScale;
+	m_fDefocusMin *= fScale;
+	m_fAstTol *= fScale;
+	//---------------------------
+	m_fPixelSize = fNewPixSize;
+}
+
 CCTFTheory::CCTFTheory(void)
 {
 	m_fPI = (float)(4.0 * atan(1.0));
@@ -62,12 +76,13 @@ void CCTFTheory::Setup
 )
 {	m_pCTFParam->m_fWavelength = mCalcWavelength(fKv) / fPixelSize;
 	m_pCTFParam->m_fCs = (float)(fCs * 1e7 / fPixelSize);
+	m_pCTFParam->m_fAstTol = fAstTol / fPixelSize;
+	m_pCTFParam->m_fPixelSize = fPixelSize;
+	//---------------------------
 	m_pCTFParam->m_fAmpContrast = fAmpContrast;
 	m_pCTFParam->m_fAmpPhaseShift = atan(fAmpContrast 
 	   / sqrt(1 - fAmpContrast * fAmpContrast)); // sz 08-28-2023
-	m_pCTFParam->m_fPixelSize = fPixelSize;
 	m_pCTFParam->m_fExtPhase = fmodf(fExtPhase, m_fPI);
-	m_pCTFParam->m_fAstTol = fAstTol / m_pCTFParam->m_fPixelSize;
 }
 
 void CCTFTheory::SetExtPhase(float fExtPhase, bool bDegree)
@@ -85,6 +100,11 @@ float CCTFTheory::GetExtPhase(bool bDegree)
 void CCTFTheory::SetPixelSize(float fPixSize)
 {
 	m_pCTFParam->m_fPixelSize = fPixSize;
+}
+
+void CCTFTheory::ChangePixelSize(float fNewPixSize)
+{
+	m_pCTFParam->ChangePixelSize(fNewPixSize);
 }
 
 void CCTFTheory::SetDefocus

@@ -14,6 +14,8 @@ public:
 	float GetDefocusMax(bool bAngstrom);
 	float GetDefocusMin(bool bAngstrom);
 	CCTFParam* GetCopy(void);
+	void ChangePixelSize(float fNewPixSize);
+	//---------------------------
 	float m_fWavelength; // pixel
 	float m_fCs; // pixel
 	float m_fAmpContrast;
@@ -42,6 +44,7 @@ public:
 	void SetExtPhase(float fExtPhase, bool bDegree);
 	float GetExtPhase(bool bDegree);
 	void SetPixelSize(float fPixSize);
+	void ChangePixelSize(float fNewPixSize);
 	void SetDefocus
 	(  float fDefocusMin, // A
 	   float fDefocusMax, // A
@@ -54,6 +57,7 @@ public:
 	);
 	void SetParam(CCTFParam* pCTFParam); // copy values
 	CCTFParam* GetParam(bool bCopy);  // do not free
+	//---------------------------
 	float Evaluate
 	(  float fFreq, // relative frequency in [-0.5, +0.5]
 	   float fAzimuth
@@ -324,15 +328,15 @@ public:
 	~CGenAvgSpectrum(void);
 	void Clean(void);
 	void SetSizes(int* piImgSize,int iTileSize);
-	void DoIt(float* pfImage, float* gfAvgSpect, bool bLogSpect);
+	void DoIt(float* gfPadImg, float* gfAvgSpect, bool bLogSpect);
 	int m_aiCmpSize[2];
 private:
 	void mGenAvgSpectrum(void);
 	void mCalcTileSpectrum(int iTile);
 	void mExtractPadTile(int iTile);
-	//-----------------
+	//---------------------------
 	GCalcMoment2D* m_pGCalcMoment2D;
-	float* m_pfImage;
+	float* m_gfPadImg;
 	int m_aiImgSize[2];
 	int m_iTileSize;
 	int m_aiPadSize[2];
@@ -415,7 +419,29 @@ private:
 	float m_afResRange[2];
 	float m_fMean;
 	float m_fStd;     
-};
+};	// CSpectrumImage
+
+class CRescaleImage
+{
+public:
+	CRescaleImage(void);
+	~CRescaleImage(void);
+	void Clean(void);
+	void Setup(int* piRawSize, float fRawPixSize);
+	void DoIt(float* pfImage);
+	float* GetScaledImg(void); // GPU, padded image, do not free
+	int m_aiNewSize[2];
+	int m_aiPadSizeN[2];  // new image size padded
+	float m_fPixSizeN;    // new pixel size
+private:
+	int m_aiRawSize[2];
+	float* m_gfPadImgN; // scaled and padded image
+	float m_fRawPixSize;
+	float m_fBinning;
+	CCufft2D* m_pForFFT;
+	CCufft2D* m_pInvFFT;
+
+};	//CRescaleImage
 
 class CFindDefocus1D
 {
@@ -530,6 +556,7 @@ public:
 	float* GenFullSpectrum(void);  // clean by caller
 	void SaveSpectrum(char* pcMrcFile);
 	void ShowResult(void);
+	//---------------------------
 	float m_fDfMin;
 	float m_fDfMax;
 	float m_fAstAng;   // degree
@@ -539,9 +566,11 @@ protected:
 	void mRemoveBackground(void);
 	void mLowpass(void);
 	void mInitPointers(void);
-	//-----------------
+	//---------------------------
 	CCTFTheory* m_pCtfTheory;
 	CGenAvgSpectrum* m_pGenAvgSpect;
+	//---------------------------
+	float m_fPixSize;
 	float* m_gfFullSpect;
 	float* m_gfRawSpect;
 	float* m_gfCtfSpect;

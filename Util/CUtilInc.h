@@ -6,6 +6,12 @@
 namespace GCTFFind
 {
 
+class CSimpleFuncs
+{
+public:
+	static void CheckCudaError(const char* pcLocation);
+};	// CSimpleFunc
+
 class CParseArgs
 {
 public:
@@ -73,6 +79,84 @@ public:
 	~GThreshold2D(void);
 	void DoIt(float* gfImg, float fMin, float fMax,
 	   int* piImgSize, bool bPadded);
+};
+
+class GFtResize2D
+{
+public:
+        GFtResize2D(void);
+        ~GFtResize2D(void);
+        //-----------------
+        static void GetBinnedCmpSize
+        (  int* piCmpSize,// cmp size before binning
+           float fBin,
+           int* piNewSize // cmp size after binning
+        );
+        static void GetBinnedImgSize
+        (  int* piImgSize, // img size before binning
+           float fBin,
+           int* piNewSize
+        );
+        static float CalcPixSize
+        (  int* piImgSize, // img size before binning
+           float fBin,
+           float fPixSize  // before binning
+        );
+        static void GetBinning
+        (  int* piCmpSize,  // cmp size before binning
+           int* piNewSize,  // cmp size after binning
+           float* pfBinning
+        );
+        void DownSample
+        ( cufftComplex* gCmpIn, int* piSizeIn,
+          cufftComplex* gCmpOut, int* piSizeOut,
+          bool bSum, cudaStream_t stream = 0
+        );
+        void UpSample
+        ( cufftComplex* gCmpIn, int* piSizeIn,
+          cufftComplex* gCmpOut, int* piSizeOut,
+          cudaStream_t stream = 0
+        );
+};	// GFtResize2D
+
+class CCufft2D
+{
+public:
+        CCufft2D(void);
+        ~CCufft2D(void);
+        void CreateForwardPlan(int* piSize, bool bPad);
+        void CreateInversePlan(int* piSize, bool bCmp);
+        void DestroyPlan(void);
+        //-----------------
+        bool Forward
+        ( float* gfPadImg, cufftComplex* gCmpImg,
+          cudaStream_t stream=0
+        );
+        bool Forward
+        ( float* gfPadImg,
+          cudaStream_t stream=0
+        );
+        cufftComplex* ForwardH2G(float* pfImg);
+        //-----------------
+        bool Inverse
+        ( cufftComplex* gCom, float* gfPadImg,
+          cudaStream_t stream=0
+        );
+        bool Inverse
+        ( cufftComplex* gCom,
+          cudaStream_t stream=0
+        );
+        float* InverseG2H(cufftComplex* gCmp);
+        //-----------------
+        void SubtractMean(cufftComplex* gComplex);
+private:
+        bool mCheckError(cufftResult* pResult, const char* pcFormat);
+        const char* mGetErrorEnum(cufftResult error);
+        //-----------------
+        cufftHandle m_aPlan;
+        cufftType m_aType;
+        int m_iFFTx;
+        int m_iFFTy;
 };
 
 class CRegSpline

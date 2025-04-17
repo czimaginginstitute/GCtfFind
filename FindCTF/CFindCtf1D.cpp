@@ -40,21 +40,20 @@ void CFindCtf1D::Setup1(CCTFTheory* pCtfTheory)
 	this->Clean();
 	CFindCtfBase::Setup1(pCtfTheory);
 	cudaMalloc(&m_gfRadialAvg, sizeof(float) * m_aiCmpSize[0]);
-	//---------------------------------------------------------
+	//---------------------------
 	m_pFindDefocus1D = new CFindDefocus1D;
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
 	m_pFindDefocus1D->Setup(pCtfParam, m_aiCmpSize[0]);
-	//-------------------------------------------------
-	m_pFindDefocus1D->SetResRange(m_afResRange);
 }
 
 void CFindCtf1D::Do1D(void)
 {	
 	mCalcRadialAverage();
 	mFindDefocus();
-	//-------------
+	//---------------------------
 	float fDfRange = fmaxf(0.3f * m_fDfMin, 3000.0f); 
 	mRefineDefocus(fDfRange);
+	//---------------------------
 	printf("1D estimate: %8.2f  %8.2f  %8.2f\n\n",
 	   m_fDfMin, m_fExtPhase, m_fScore);	
 }
@@ -73,10 +72,10 @@ void CFindCtf1D::Refine1D(float fInitDf, float fDfRange)
 
 void CFindCtf1D::mFindDefocus(void)
 {
-	CInput* pInput = CInput::GetInstance();
-	float fPixSize2 = pInput->m_fPixelSize * pInput->m_fPixelSize;
+	m_pFindDefocus1D->SetResRange(m_afResRange);
+	float fPixSize2 = m_fPixSize * m_fPixSize;
 	float afDfRange[2] = {0.0f};
-	afDfRange[0] = 3000.0f * fPixSize2;
+	afDfRange[0] = 1000.0f * fPixSize2;
 	afDfRange[1] = 30000.0f * fPixSize2;
 	//----------------------------------
 	float afPhaseRange[2] = {0.0f};
@@ -92,10 +91,10 @@ void CFindCtf1D::mFindDefocus(void)
 
 void CFindCtf1D::mRefineDefocus(float fDfRange)
 {
-	CInput* pInput = CInput::GetInstance();
-	float fPixSize2 = pInput->m_fPixelSize * pInput->m_fPixelSize;
+	m_pFindDefocus1D->SetResRange(m_afResRange);
+	float fPixSize2 = m_fPixSize * m_fPixSize;
 	float afDfRange[2] = {0.0f};
-	afDfRange[0] = fmaxf(m_fDfMin - fDfRange / 2, 3000.0f);
+	afDfRange[0] = fmaxf(m_fDfMin - fDfRange / 2, 1000.0f);
 	afDfRange[1] = afDfRange[0] + fDfRange;
 	//----------------------
 	float afPhaseRange[2] = {0.0f};

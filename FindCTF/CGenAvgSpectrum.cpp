@@ -75,21 +75,21 @@ void CGenAvgSpectrum::SetSizes(int* piImgSize, int iTileSize)
 }
 
 void CGenAvgSpectrum::DoIt
-(	float* pfImage,
+(	float* gfPadImg,
 	float* gfAvgSpect,
 	bool bLogSpect
 )
-{	m_pfImage = pfImage;
+{	m_gfPadImg = gfPadImg;
 	m_gfAvgSpect = gfAvgSpect;
 	m_bLogSpect = bLogSpect;
-	//----------------------
+	//---------------------------
 	GAddImages aGAddImages;
 	int iNumTiles = m_aiNumTiles[0] * m_aiNumTiles[1];
 	float fFactor2 = 1.0f / iNumTiles;
-	//-----------------
+	//---------------------------
 	cudaMemset(m_gfAvgSpect, 0, sizeof(float) * 
 	   m_aiCmpSize[0] * m_aiCmpSize[1]);
-	//-----------------------------------------a
+	//---------------------------
 	for(int i=0; i<iNumTiles; i++)
 	{	mCalcTileSpectrum(i);
 		aGAddImages.DoIt(m_gfAvgSpect, 1.0f, m_gfTileSpect, 
@@ -127,11 +127,13 @@ void CGenAvgSpectrum::mExtractPadTile(int iTile)
 	int iTileY = iTile / m_aiNumTiles[0];
 	int iStartX = m_aiOffset[0] + iTileX * (m_iTileSize - m_iOverlap);
 	int iStartY = m_aiOffset[1] + iTileY * (m_iTileSize - m_iOverlap);
-	//----------------------------------------------------------------
+	//---------------------------
+	int iPadImgX = (m_aiImgSize[0] / 2 + 1) * 2;
 	size_t tBytes = sizeof(float) * m_iTileSize;
-	int iOffset = iStartY * m_aiImgSize[0] + iStartX;
+	int iOffset = iStartY * iPadImgX + iStartX;
+	//---------------------------
 	for(int y=0; y<m_iTileSize; y++)
-	{	float* pfSrc = m_pfImage + y * m_aiImgSize[0] + iOffset;
+	{	float* pfSrc = m_gfPadImg + y * iPadImgX + iOffset;
 		float* gfDst = m_gfPadTile + y * m_aiPadSize[0];
 		cudaMemcpy(gfDst, pfSrc, tBytes, cudaMemcpyDefault);
 	}

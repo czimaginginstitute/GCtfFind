@@ -2,6 +2,7 @@
 #include "FindCTF/CFindCTFInc.h"
 #include "Util/CUtilInc.h"
 #include "MrcUtil/CMrcUtilInc.h"
+#include <Util/Util_Time.h>
 #include <memory.h>
 #include <stdio.h>
 
@@ -26,6 +27,7 @@ void CFindSeriesCtfs::DeleteInstance(void)
 CFindSeriesCtfs::CFindSeriesCtfs(void)
 {
 	m_pvFindCtf2D = 0L;
+	m_pvRescaleImg = 0L;
 }
 
 CFindSeriesCtfs::~CFindSeriesCtfs(void)
@@ -39,45 +41,55 @@ void CFindSeriesCtfs::Clean(void)
 	{	delete (CFindCtf2D*)m_pvFindCtf2D;
 		m_pvFindCtf2D = 0L;
 	}
+	if(m_pvRescaleImg != 0L)
+	{	delete (CRescaleImage*)m_pvRescaleImg;
+		m_pvRescaleImg = 0L;
+	}
 }
 
 void CFindSeriesCtfs::DoIt(void)
 {
 	this->Clean();
-	//------------
-	CFindCtf2D* pFindCtf2D = new CFindCtf2D;
-	m_pvFindCtf2D = pFindCtf2D;
+	//---------------------------
+	m_pvFindCtf2D = new CFindCtf2D;
+	m_pvRescaleImg = new CRescaleImage;
+	//---------------------------
 	CInput* pInput = CInput::GetInstance();
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
 	CLoadImages* pLoadImages = CLoadImages::GetInstance();
 	CAsyncSaveImages* pAsyncSaveImages = CAsyncSaveImages::GetInstance();
 	CSaveCtfResults* pSaveCtfResults = CSaveCtfResults::GetInstance();
-	//-------------------------------------------------------------------
-	CCTFTheory aInputCtf;
-	float fExtPhase = pInput->m_afExtPhase[0] * 0.017453f;
-	aInputCtf.Setup(pInput->m_fKv, pInput->m_fCs,
-	   pInput->m_fAmpContrast, pInput->m_fPixelSize,
-	   100.0f, fExtPhase);
-	pFindCtf2D->Setup1(&aInputCtf);
-	//-----------------------------
+	//---------------------------
 	bool bPop = true, bRaw = true, bToHost = true;
 	m_iNumDone = 0;
 	m_pRefPackage = 0L;
 	m_iNumPackages = pInputFolder->GetNumPackages();
-	//--------------------------------------------
+	//---------------------------
+	Util_Time utilTime;
+	float fWaitTime = 0.0f;
+	char acLog[512] = {'\0'}, acBuf[32] = {'\0'};
+	//---------------------------
 	while(m_iNumDone < m_iNumPackages)
 	{	m_pPackage = pLoadImages->GetPackage(bPop);
 		if(m_pPackage == 0L)
 		{	pLoadImages->WaitForExit(0.01f);
-			printf("Wait for micrograph to be loaded.\n\n");
+			fWaitTime += 0.01f;
 			continue;
 		}
+		sprintf(acBuf, "Loading time: %.2f (s)\n", fWaitTime);
+		strcpy(acLog, acBuf);
+		//--------------------------
+		utilTime.Measure();
+		mRescaleImage(m_iNumDone);
+		mSetupFindCtf();
 		//-----------------------------------------------
 		// In case different images have different sizes,
 		// If the same, no extra oeverheader.
 		//-----------------------------------------------
-		pFindCtf2D->Setup2(m_pPackage->m_aiImgSize);
 		mProcessPackage(m_iNumDone);
+		fWaitTime = utilTime.GetElapsedSeconds();
+		sprintf(acBuf, "Processing time: %.2f (s)\n", fWaitTime);
+		strcat(acLog, acBuf);
 		//--------------------------
 		pAsyncSaveImages->SetPackage(m_pPackage);
 		m_iNumDone += 1;
@@ -88,19 +100,41 @@ void CFindSeriesCtfs::DoIt(void)
 		pSaveCtfResults->SaveCTF();
 		pSaveCtfResults->SaveImod();
 	}
+	printf("%s", acLog);
 	//----------------------------------
-	delete pFindCtf2D;
-	m_pvFindCtf2D = 0L;
+	this->Clean();
+}
+
+void CFindSeriesCtfs::mRescaleImage(int iPackage)
+{
+	CInput* pInput = CInput::GetInstance();
+	CRescaleImage* pRescaleImg = (CRescaleImage*)m_pvRescaleImg;
+	pRescaleImg->Setup(m_pPackage->m_aiImgSize, pInput->m_fPixSize);
+	pRescaleImg->DoIt(m_pPackage->m_pfImage);
+}
+
+void CFindSeriesCtfs::mSetupFindCtf(void)
+{
+	CInput* pInput = CInput::GetInstance();
+	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
+	CRescaleImage* pRescaleImg = (CRescaleImage*)m_pvRescaleImg;
+	//---------------------------
+	CCTFTheory aInputCtf;
+        float fExtPhase = pInput->m_afExtPhase[0] * 0.017453f;
+        aInputCtf.Setup(pInput->m_fKv, pInput->m_fCs,
+           pInput->m_fAmpContrast, pRescaleImg->m_fPixSizeN,
+           100.0f, fExtPhase);
+	//---------------------------
+        pFindCtf2D->Setup1(&aInputCtf);
+	pFindCtf2D->Setup2(pRescaleImg->m_aiNewSize);
+	pFindCtf2D->GenHalfSpectrum(pRescaleImg->GetScaledImg());
 }
 
 void CFindSeriesCtfs::mProcessPackage(int iPackage)
 {
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
 	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
-	//--------------------------------------------------
-	bool bRaw = true, bToHost = true, bClean = true, bHalf = true;
-	pFindCtf2D->GenHalfSpectrum(m_pPackage->m_pfImage);
-	//-------------------------------------------------
+	//---------------------------
 	//if(iPackage == 0 || !pInputFolder->IsTomo()) mProcessFull();
 	if(iPackage == 0) 
 	{	mProcessFull();
@@ -111,7 +145,8 @@ void CFindSeriesCtfs::mProcessPackage(int iPackage)
 	}
 	//--------------------
 	mDisplay();
-	//---------
+	//---------------------------
+	bool bHalf = true;
 	m_pPackage->m_pfFullSpect = pFindCtf2D->GenFullSpectrum();
 	pFindCtf2D->GetSpectSize(m_pPackage->m_aiSpectSize, !bHalf);
 }
@@ -142,8 +177,8 @@ void CFindSeriesCtfs::mProcessRefine(void)
 	//---------------------------------------------------
 	float fDfMin = m_pRefPackage->m_fDfMin;
 	float fDfMax = m_pRefPackage->m_fDfMax;
-	float fDfRange = 5000.0f * pInput->m_fPixelSize 
-	   * pInput->m_fPixelSize;
+	float fDfRange = 5000.0f * pInput->m_fPixSize 
+	   * pInput->m_fPixSize;
 	afDfRange[0] = 0.5f * (fDfMin + fDfMax); 
 	afDfRange[1] = fmaxf(afDfRange[0] * 0.5f, fDfRange);
 	afAstRatio[0] = CFindCtfHelp::CalcAstRatio(fDfMin, fDfMax);

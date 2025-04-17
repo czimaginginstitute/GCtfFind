@@ -48,7 +48,14 @@ Bug Fix:
 Version 1.0.8 [04-11-2025]
 --------------------------
 Bug fix:
+1. GCalcCTF2D::mEmbedCtf: the theoretical CTF was squared. Now change back to
+   original CTF.
+2. GCalcCTF2D.::mEmbedCtf: iY should be (iCmpY - y) % iCmpY when mapping the
+   negative x frequency to positive x frequency.
 Changes:
 1. Ported AreTomo3's implementation of FindCtf in GCtfFind.
 2. Reduced the lowpass strength in CFindDefocus2D.cpp from 100 to 40 to account
    for more high-freq signals, important for phase shift estimation.
+3. Added image rescaling: when the pixel size is less 1A, the image is rescaled
+   to 1A pixel size by Fourier cropping (CRescaleImage.cpp).
+

@@ -10,6 +10,7 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./Util/GCalcMoment2D.cu \
 	 ./Util/GNormalize2D.cu \
 	 ./Util/GThreshold2D.cu \
+	 ./Util/GFtResize2D.cu \
 	 ./FindCTF/GCalcCTF1D.cu \
 	 ./FindCTF/GCalcCTF2D.cu \
 	 ./FindCTF/GCalcSpectrum.cu \
@@ -25,18 +26,21 @@ CUSRCS = ./Util/GAddImages.cu \
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
+	./Util/CSimpleFuncs.cpp \
 	./Util/CParseArgs.cpp \
 	./Util/CRegSpline.cpp \
 	./Util/CRegSpline2.cpp \
 	./Util/CRegSpline3.cpp \
 	./Util/CSaveTempMrc.cpp \
 	./Util/CCudaHelper.cpp \
+	./Util/CCufft2D.cpp \
 	./MrcUtil/CLoadImages.cpp \
 	./MrcUtil/CAsyncSaveImages.cpp \
 	./MrcUtil/CSaveImages.cpp \
 	./MrcUtil/CAsyncSingleSave.cpp \
 	./FindCTF/CFindCtfHelp.cpp \
 	./FindCTF/CCTFTheory.cpp \
+	./FindCTF/CRescaleImage.cpp \
 	./FindCTF/CGenAvgSpectrum.cpp \
 	./FindCTF/CSpectrumImage.cpp \
 	./FindCTF/CFindDefocus1D.cpp \

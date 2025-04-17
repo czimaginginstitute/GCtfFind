@@ -43,7 +43,7 @@ CInput::CInput(void)
 	m_fKv = 300.0f;
 	m_fCs = 2.7f;  // mm
 	m_fAmpContrast = 0.07f;
-	m_fPixelSize = 1.0f; // A
+	m_fPixSize = 1.0f; // A
 	m_afExtPhase[0] = 0.0f;  // degree
 	m_afExtPhase[1] = 0.0f;  // not search when 0 or negative
 	m_afTiltRange[0] = 0.0f; 
@@ -147,7 +147,7 @@ void CInput::Parse(int argc, char* argv[])
 	//-------------------------------------------
 	aParseArgs.FindVals(m_acPixelSizeTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
-	aParseArgs.GetVals(aiRange, &m_fPixelSize);
+	aParseArgs.GetVals(aiRange, &m_fPixSize);
 	//-----------------------------------------
 	aParseArgs.FindVals(m_acExtPhaseTag, aiRange);
 	if(aiRange[1] > 2) aiRange[1] = 2;
@@ -190,7 +190,7 @@ void CInput::mPrint(void)
 	printf("%-15s  %f\n", m_acKvTag, m_fKv);
 	printf("%-15s  %f\n", m_acCsTag, m_fCs);
 	printf("%-15s  %f\n", m_acAmpContrastTag, m_fAmpContrast);
-	printf("%-15s  %f\n", m_acPixelSizeTag, m_fPixelSize);
+	printf("%-15s  %f\n", m_acPixelSizeTag, m_fPixSize);
 	printf("%-15s  %f  %f\n", m_acExtPhaseTag, 
 	   m_afExtPhase[0], m_afExtPhase[1]);
 	printf("%-15s  %d\n", m_acTileSizeTag, m_iTileSize);
