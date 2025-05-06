@@ -117,8 +117,7 @@ void CGenAvgSpectrum::mCalcTileSpectrum(int iTile)
 	aGRoundEdge.DoIt(m_gfPadTile, m_aiPadSize);
 	//-----------------------------------------
 	GCalcSpectrum aGCalcSpectrum;
-	aGCalcSpectrum.DoPad(m_gfPadTile, m_gfTileSpect, 
-	   m_aiPadSize, m_bLogSpect);
+	aGCalcSpectrum.DoPad(m_gfPadTile, m_gfTileSpect, m_aiPadSize);
 }
 
 void CGenAvgSpectrum::mExtractPadTile(int iTile)

@@ -79,23 +79,18 @@ GCalcSpectrum::~GCalcSpectrum(void)
 void GCalcSpectrum::DoIt
 (	cufftComplex* gCmp, 
 	float* gfSpectrum, 
-	int* piCmpSize,
-	bool bLog
+	int* piCmpSize
 )
 {	dim3 aBlockDim(1, 512);
 	int iGridY = piCmpSize[1] / aBlockDim.y + 1;
 	dim3 aGridDim(piCmpSize[0], iGridY);
 	mGCalculate<<<aGridDim, aBlockDim>>>(gCmp, gfSpectrum, piCmpSize[1]);
-	if(!bLog) return;
-	//---------------
-	mGLogrithm<<<aGridDim, aBlockDim>>>(gfSpectrum, piCmpSize[1]);
 }
 
 void GCalcSpectrum::DoPad
 (	float* gfPadImg,
 	float* gfSpectrum,
-	int* piPadSize,
-	bool bLog
+	int* piPadSize
 )
 {	CuUtilFFT::GFFT2D aGFFT2D;
 	int aiFFTSize[] = {0, piPadSize[1]};
@@ -106,7 +101,7 @@ void GCalcSpectrum::DoPad
 	aGFFT2D.DestroyPlan();
 	//-------------------------------
 	int aiCmpSize[] = {piPadSize[0]/2, piPadSize[1]};
-	this->DoIt((cufftComplex*)gfPadImg, gfSpectrum, aiCmpSize, bLog);
+	this->DoIt((cufftComplex*)gfPadImg, gfSpectrum, aiCmpSize);
 }
 
 void GCalcSpectrum::Logrithm

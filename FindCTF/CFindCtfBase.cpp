@@ -63,15 +63,13 @@ void CFindCtfBase::Setup1(CCTFTheory* pCtfTheory)
 	//---------------------------
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
 	m_fPixSize = pCtfParam->m_fPixelSize;
-	m_afResRange[0] = 20.0f * m_fPixSize;
-        m_afResRange[1] = 3.5f * m_fPixSize;
+	m_afResRange[0] = 25.0f * m_fPixSize;
+        m_afResRange[1] = (2.0f * m_fPixSize) / 0.8f;
+	if(m_afResRange[1] > 3.5f) m_afResRange[1] = 3.5f;
 }
 
 void CFindCtfBase::Setup2(int* piImgSize)
 {
-	if(m_aiImgSize[0] == piImgSize[0] && 
-	   m_aiImgSize[1] == piImgSize[1]) return;
-	//---------------------------
 	m_aiImgSize[0] = piImgSize[0];
 	m_aiImgSize[1] = piImgSize[1];
 	m_pGenAvgSpect->SetSizes(m_aiImgSize, m_aiCmpSize[1]);

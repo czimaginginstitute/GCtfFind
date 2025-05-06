@@ -143,14 +143,12 @@ public:
 	void DoIt
 	( cufftComplex* gCmp,
 	  float* gfSpectrum,
-	  int* piCmpSize,
-	  bool bLog
+	  int* piCmpSize
 	);
 	void DoPad
 	( float* gfPadImg,   // image already padded
 	  float* gfSpectrum, // GPU buffer
-	  int* piPadSize,
-	  bool bLog
+	  int* piPadSize
 	);
 	void Logrithm
 	( float* gfSpectrum,

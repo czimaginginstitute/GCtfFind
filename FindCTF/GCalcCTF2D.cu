@@ -34,7 +34,7 @@ static __global__ void mGCalculate
 	fX = -sinf(fExtPhase + 3.1415926f * s_gfCtfParam[0] * fS2
 	   * (fX - 0.5f * fS2 * fW2 * s_gfCtfParam[1]));
 	//-----------------
-	gfCTF2D[y * gridDim.x + blockIdx.x] = fX * fX;
+	gfCTF2D[y * gridDim.x + blockIdx.x] = fX;
 }
 
 //------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ static __global__ void mGEmbedCtf
 	//----------------------------------------------
 	int iX = gridDim.x - blockIdx.x;
 	int iY = (iCmpY - y) % iCmpY;
-	fY = gfCtf2D[iY * (gridDim.x + 1) + iX];
+	fY = fabsf(gfCtf2D[iY * (gridDim.x + 1) + iX]);
 	fY = (fY - 0.5) * fGain + fMean;
 	//--------------------------------------------------------
 	// CTF is embededd on the right half of the full spectrum.

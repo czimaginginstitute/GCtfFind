@@ -59,3 +59,29 @@ Changes:
 3. Added image rescaling: when the pixel size is less 1A, the image is rescaled
    to 1A pixel size by Fourier cropping (CRescaleImage.cpp).
 
+Version 1.1.0 [04-17-2025]
+--------------------------
+Renamed from version 1.0.8
+
+Version 1.1.1 [05-03-2025]
+--------------------------
+Bug fix:
+1. FindCtf/CFindDefocus1D::mBrutalForceSearch: m_afPhaseRange is [min, max],
+   not [center, range].
+2. Delete FindCtf/GCalcSpectrum2D.cu, which is not used. The used one is
+   GCalcSpectrum.cu.
+
+Version 1.1.2 [05-05-2025]
+--------------------------
+Bug Fix:
+1. FindCtf/CFindCtfBase::Setup2: Removed the if statement, which prevents the
+   generation of new averaged spectrum.
+2. FindCtf/GCalcCTF1D & GCalcCTF2D: 1D generates CTF and 2D generates CTF^2.
+   Now the both generates 1D and 2D CTF.
+3. FindCtf/GCalcSpectrum: It generates amplitude spectrum whereas GCC1D and
+   GCC2D both correlate with CTF^2.
+4. FindCtf/GCC1D: see item 3. Now compare amplitude spectrum with abs(CTF).
+5. FindCtf/GCC2D: see item 4. Now compare amplitude spectrum with abs(CTF).
+Changes:
+1. FindCtf/CFindCtfBase::m_afResRange[1]: set it at 0.8 Nyquist. If it is
+   beyond 3.5A, cap it at 3.5A.

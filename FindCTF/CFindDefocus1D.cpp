@@ -78,13 +78,14 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 	int iDfSteps = 501;
 	float fDfRange = m_afDfRange[1] - m_afDfRange[0];
 	float fDfStep = fDfRange / (iDfSteps - 1);
-	if(fDfStep < 50) fDfStep = 50.0f;
+	if(fDfStep < 10) fDfStep = 10.0f;
 	iDfSteps = (int)(fDfRange / fDfStep) / 2 * 2 + 1;
 	//-----------------
 	int iPsSteps = 37;
-	float fPsStep = m_afPhaseRange[1] / (iPsSteps - 1);
-	if(fPsStep < 2) fPsStep = 2.0f;
-	iPsSteps = (int)(m_afPhaseRange[1] / fPsStep) / 2 * 2 + 1;
+	float fPsRange = m_afPhaseRange[1] - m_afPhaseRange[0];
+	float fPsStep = fPsRange / (iPsSteps - 1);
+	if(fPsStep ==  0) iPsSteps = 1;
+	else iPsSteps = (int)(fPsRange / fPsStep) / 2 * 2 + 1;
 	//-----------------
 	int iPoints = iDfSteps * iPsSteps;
 	float* pfCCs = new float[iPoints];
@@ -97,7 +98,7 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 	{	iFocus = i % iDfSteps;
 		iPhase = i / iDfSteps;
 		fDefocus = m_afDfRange[0] + iFocus * fDfStep;
-		fPhase = m_afPhaseRange[0] + (iPhase - iPsSteps / 2) * fPsStep;
+		fPhase = m_afPhaseRange[0] + iPhase * fPsStep;
 		if(fPhase < 0) fPhase = 0.0f;
 		else if(fPhase > 150.0f) fPhase = 150.0f;
 		//----------------
@@ -130,7 +131,7 @@ float CFindDefocus1D::mCorrelate(void)
 	float fMinFreq = fRes1 / m_afResRange[0];
 	float fMaxFreq = fRes1 / m_afResRange[1];
 	//---------------------------------------
-	m_pGCC1D->Setup(fMinFreq, fMaxFreq, 0.0f);
+	m_pGCC1D->Setup(fMinFreq, fMaxFreq, 1.0f);
 	float fCC = m_pGCC1D->DoIt(m_gfCtf1D, m_gfRadialAvg);
 	return fCC;
 }
