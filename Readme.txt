@@ -85,3 +85,5 @@ Bug Fix:
 Changes:
 1. FindCtf/CFindCtfBase::m_afResRange[1]: set it at 0.8 Nyquist. If it is
    beyond 3.5A, cap it at 3.5A.
+2. FindCtf/CFindDefocus2D: reduced the B-factor from 100 to 16 to include
+   more high-res Thon rings into correlation.
