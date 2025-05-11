@@ -44,6 +44,8 @@ void CFindCtf2D::Setup1(CCTFTheory* pCtfTheory)
 void CFindCtf2D::Do2D(void)
 {	
 	CFindCtf1D::Do1D();
+	//---------------------------
+	m_pFindDefocus2D->Setup2(m_afResRange);
 	float fDfMean = (m_fDfMin + m_fDfMax) * 0.5f;
 	m_pFindDefocus2D->Setup3(fDfMean, 0.0f, 0.0f, m_fExtPhase);
 	m_pFindDefocus2D->DoIt(m_gfCtfSpect, m_fPhaseRange);
@@ -56,8 +58,10 @@ void CFindCtf2D::Refine
 	float afAstAngle[2],
 	float afExtPhase[2]
 )
-{	m_pFindDefocus2D->Setup3(afDfMean[0], afAstRatio[0],
+{	m_pFindDefocus2D->Setup2(m_afResRange);
+	m_pFindDefocus2D->Setup3(afDfMean[0], afAstRatio[0],
 	   afAstAngle[0], afExtPhase[0]);
+	//---------------------------
 	m_pFindDefocus2D->Refine(m_gfCtfSpect, afDfMean[1],
 	   afAstRatio[1], afAstAngle[1], afExtPhase[1]);
 	mGetResults();

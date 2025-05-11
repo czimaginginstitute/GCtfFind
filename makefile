@@ -1,5 +1,6 @@
 PRJHOME = $(shell pwd)
-CUDAHOME = $(HOME)/nvidia/cuda-12.0
+CONDA = $(HOME)/miniconda3
+CUDAHOME = $(HOME)/nvidia/cuda-12.1
 CUDAINC = $(CUDAHOME)/include
 CUDALIB = $(CUDAHOME)/lib64
 PRJINC = $(PRJHOME)/Include
@@ -9,6 +10,7 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./Util/GCalcMoment2D.cu \
 	 ./Util/GNormalize2D.cu \
 	 ./Util/GThreshold2D.cu \
+	 ./Util/GFtResize2D.cu \
 	 ./FindCTF/GCalcCTF1D.cu \
 	 ./FindCTF/GCalcCTF2D.cu \
 	 ./FindCTF/GCalcSpectrum.cu \
@@ -17,23 +19,28 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GRmBackground2D.cu \
 	 ./FindCTF/GRemoveMean.cu \
 	 ./FindCTF/GRoundEdge.cu \
+	 ./FindCTF/GSpectralCC2D.cu \
 	 ./FindCTF/GCC1D.cu \
-	 ./FindCTF/GCC2D.cu
+	 ./FindCTF/GCC2D.cu \
+	 ./FindCTF/GLowpass2D.cu
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
+	./Util/CSimpleFuncs.cpp \
 	./Util/CParseArgs.cpp \
 	./Util/CRegSpline.cpp \
 	./Util/CRegSpline2.cpp \
 	./Util/CRegSpline3.cpp \
 	./Util/CSaveTempMrc.cpp \
 	./Util/CCudaHelper.cpp \
+	./Util/CCufft2D.cpp \
 	./MrcUtil/CLoadImages.cpp \
 	./MrcUtil/CAsyncSaveImages.cpp \
 	./MrcUtil/CSaveImages.cpp \
 	./MrcUtil/CAsyncSingleSave.cpp \
 	./FindCTF/CFindCtfHelp.cpp \
 	./FindCTF/CCTFTheory.cpp \
+	./FindCTF/CRescaleImage.cpp \
 	./FindCTF/CGenAvgSpectrum.cpp \
 	./FindCTF/CSpectrumImage.cpp \
 	./FindCTF/CFindDefocus1D.cpp \
@@ -54,7 +61,7 @@ OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 #-------------------------------------
 CC = g++
 CFLAG = -c -g -pthread -m64
-NVCC = nvcc
+NVCC = $(CUDAHOME)/bin/nvcc -std=c++11
 CUFLAG = -Xptxas -dlcm=ca -O2 \
 	-gencode arch=compute_52,code=sm_52 \
 	-gencode arch=compute_53,code=sm_53 \

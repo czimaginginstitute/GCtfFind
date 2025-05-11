@@ -48,7 +48,8 @@ static __global__ void mGenFullSpect
 (	float* gfHalfSpect,
 	float* gfFullSpect,
 	int iHalfX,
-	int iCmpY
+	int iCmpY,
+	int iFullSizeX
 )
 {	int xSrc, ySrc, xDst, yDst;
 	yDst = blockIdx.y * blockDim.y + threadIdx.y;
@@ -63,7 +64,7 @@ static __global__ void mGenFullSpect
 	{	xSrc = -xDst;
 		ySrc = iCmpY - yDst;
 	}
-	gfFullSpect[yDst * gridDim.x + blockIdx.x] = 
+	gfFullSpect[yDst * iFullSizeX + blockIdx.x] = 
 	   gfHalfSpect[ySrc * (iHalfX + 1) + xSrc];
 }
 
@@ -78,23 +79,18 @@ GCalcSpectrum::~GCalcSpectrum(void)
 void GCalcSpectrum::DoIt
 (	cufftComplex* gCmp, 
 	float* gfSpectrum, 
-	int* piCmpSize,
-	bool bLog
+	int* piCmpSize
 )
 {	dim3 aBlockDim(1, 512);
 	int iGridY = piCmpSize[1] / aBlockDim.y + 1;
 	dim3 aGridDim(piCmpSize[0], iGridY);
 	mGCalculate<<<aGridDim, aBlockDim>>>(gCmp, gfSpectrum, piCmpSize[1]);
-	if(!bLog) return;
-	//---------------
-	mGLogrithm<<<aGridDim, aBlockDim>>>(gfSpectrum, piCmpSize[1]);
 }
 
 void GCalcSpectrum::DoPad
 (	float* gfPadImg,
 	float* gfSpectrum,
-	int* piPadSize,
-	bool bLog
+	int* piPadSize
 )
 {	CuUtilFFT::GFFT2D aGFFT2D;
 	int aiFFTSize[] = {0, piPadSize[1]};
@@ -105,7 +101,7 @@ void GCalcSpectrum::DoPad
 	aGFFT2D.DestroyPlan();
 	//-------------------------------
 	int aiCmpSize[] = {piPadSize[0]/2, piPadSize[1]};
-	this->DoIt((cufftComplex*)gfPadImg, gfSpectrum, aiCmpSize, bLog);
+	this->DoIt((cufftComplex*)gfPadImg, gfSpectrum, aiCmpSize);
 }
 
 void GCalcSpectrum::Logrithm
@@ -120,15 +116,17 @@ void GCalcSpectrum::Logrithm
 void GCalcSpectrum::GenFullSpect
 (	float* gfHalfSpect, 
 	int* piCmpSize,
-        float* gfFullSpect
+        float* gfFullSpect,
+	bool bFullPadded
 )
 {	int iHalfX = piCmpSize[0] - 1;
 	int iNx = iHalfX * 2;
+	int iFullSizeX = bFullPadded ? iNx + 2 : iNx;
 	//-------------------
 	dim3 aBlockDim(1, 512);
 	dim3 aGridDim(iNx, 1);
 	aGridDim.y = (piCmpSize[1] + aBlockDim.y - 1) / aBlockDim.y;
 	//----------------------------------------------------------
 	mGenFullSpect<<<aGridDim, aBlockDim>>>(gfHalfSpect,
-	   gfFullSpect, iHalfX, piCmpSize[1]);
+	   gfFullSpect, iHalfX, piCmpSize[1], iFullSizeX);
 }	

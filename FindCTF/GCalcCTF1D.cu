@@ -22,13 +22,13 @@ static __global__ void mGCalculate
 )
 {	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if(i >= iCmpSize) return;
-	//-----------------------
+	//-----------------
 	float fs2 = (i * 0.5f) / (iCmpSize - 1.0f);
 	fs2 = fs2 * fs2;
 	float fw2 = s_gfCtfParam[0] * s_gfCtfParam[0];
 	fw2 = fExtPhase + 3.141592654f * s_gfCtfParam[0] * fs2
-	   * (fDefocus - 0.5f * fw2 * fw2 * s_gfCtfParam[1]);
-	//---------------------------------------------------
+	   * (fDefocus - 0.5f * fw2 * fs2 * s_gfCtfParam[1]);
+	//-----------------
 	gfCTF1D[i] = -sinf(fw2);
 }
 
@@ -47,7 +47,7 @@ void GCalcCTF1D::SetParam(CCTFParam* pCtfParam)
 	afCtfParam[1] = pCtfParam->m_fCs;
 	cudaMemcpyToSymbol(s_gfCtfParam, afCtfParam, sizeof(float) * 2);
 	//--------------------------------------------------------------
-	m_fAmpPhase = (float)atanf(pCtfParam->m_fAmpContrast / (1.0f 
+	m_fAmpPhase = (float)atanf(pCtfParam->m_fAmpContrast / sqrtf(1.0f 
 	   - pCtfParam->m_fAmpContrast * pCtfParam->m_fAmpContrast));
 }
 

@@ -43,7 +43,7 @@ CInput::CInput(void)
 	m_fKv = 300.0f;
 	m_fCs = 2.7f;  // mm
 	m_fAmpContrast = 0.07f;
-	m_fPixelSize = 1.0f; // A
+	m_fPixSize = 1.0f; // A
 	m_afExtPhase[0] = 0.0f;  // degree
 	m_afExtPhase[1] = 0.0f;  // not search when 0 or negative
 	m_afTiltRange[0] = 0.0f; 
@@ -64,10 +64,10 @@ CInput::~CInput(void)
 
 void CInput::ShowTags(void)
 {
-	printf("%-15s\n"
+	printf("%-15s: \n"
 	  "  1. Input MRC file that contains single image or a stack of\n"
 	  "     frames. In the latter case, CTF will be estimated for \n"
-	  "     each frame.\n\n", m_acInMrcTag);
+	  "     each fraome.\n\n", m_acInMrcTag);
 	printf("%-15s\n"
 	  "  1. Output MRC file that contains the averaged\n"
 	  "     amplitude spectrum.\n"
@@ -97,22 +97,17 @@ void CInput::ShowTags(void)
 	  "  1. Extra phase shift and search range in degree.\n\n", 
 	   m_acExtPhaseTag);
 	printf("%-15s\n"
-          "  1. Tile size in pixels.\n\n", m_acTileSizeTag);
-	printf("%-15s\n"
-	  "  1. Calculate logarithmic spectrum. It is not enabled by default.\n\n",
-	   m_acLogSpectTag);
+	  "  1. Calculate logrithmic spectrum. It is not enabled "
+	  "     by default.\n\n", m_acLogSpectTag);
 	printf("%-15s\n"
 	  "  1. Image or tilt series with their file names ended with the\n" 
 	  "     specified suffix will be loaded for CTF estimation.\n"
 	  "  2. In this case, -InMrc and -InSuffix are jointly used to\n"
 	  "     to screen files for CTF estimation.\n\n", m_acInSuffixTag);
 	printf("%-15s\n"
-	  "  1. Enable serial CTS estimation where there are multiple files\n"
+	  "  1. Enale serial CTS estimation where there are multiple files\n"
 	  "     to be processed.\n"
-	  "  2. -Serial 1 enables serial processing.\n\n", m_acSerialTag);
-	printf("%-15s\n"
-          "  1. GPU IDs. Default 0.\n"
-	  "  2. User can choose any other number.\n", m_acGpuIDTag);
+	  "  2. -Serial 1 enables serial processing.\n\n", m_acSerialTag);	
 }
 
 void CInput::Parse(int argc, char* argv[])
@@ -152,7 +147,7 @@ void CInput::Parse(int argc, char* argv[])
 	//-------------------------------------------
 	aParseArgs.FindVals(m_acPixelSizeTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
-	aParseArgs.GetVals(aiRange, &m_fPixelSize);
+	aParseArgs.GetVals(aiRange, &m_fPixSize);
 	//-----------------------------------------
 	aParseArgs.FindVals(m_acExtPhaseTag, aiRange);
 	if(aiRange[1] > 2) aiRange[1] = 2;
@@ -195,7 +190,7 @@ void CInput::mPrint(void)
 	printf("%-15s  %f\n", m_acKvTag, m_fKv);
 	printf("%-15s  %f\n", m_acCsTag, m_fCs);
 	printf("%-15s  %f\n", m_acAmpContrastTag, m_fAmpContrast);
-	printf("%-15s  %f\n", m_acPixelSizeTag, m_fPixelSize);
+	printf("%-15s  %f\n", m_acPixelSizeTag, m_fPixSize);
 	printf("%-15s  %f  %f\n", m_acExtPhaseTag, 
 	   m_afExtPhase[0], m_afExtPhase[1]);
 	printf("%-15s  %d\n", m_acTileSizeTag, m_iTileSize);

@@ -30,4 +30,60 @@ Version 1.0.4
 Version 1.0.5
 -------------
 1. FindCtf/CFindSeriesCtfs::mProcessRefin:
-   Added fDfRange = 5000 * pixel_size * pixel_size 
+   Added fDfRange = 5000 * pixel_size * pixel_size
+
+Version 1.0.6
+-------------
+1. Add lowpass filter and apply it to the background removed spectrum.
+
+Version 1.0.7
+-------------
+Bug Fix:
+1. FindCtf/GCalcCTF1D at line 30: should be 0.5f * fw2 * fs2.
+   FindCtf/GCalcCTF1D at line 50: added sqrtf.
+2. FindCtf/GCalcCTF2D at line 35: should be 0.5f * fW2 * fS2.
+   FindCtf/GCalcCTF2D at line 94: added sqrtf.
+3. Revised makefile for new environment setting
+
+Version 1.0.8 [04-11-2025]
+--------------------------
+Bug fix:
+1. GCalcCTF2D::mEmbedCtf: the theoretical CTF was squared. Now change back to
+   original CTF.
+2. GCalcCTF2D.::mEmbedCtf: iY should be (iCmpY - y) % iCmpY when mapping the
+   negative x frequency to positive x frequency.
+Changes:
+1. Ported AreTomo3's implementation of FindCtf in GCtfFind.
+2. Reduced the lowpass strength in CFindDefocus2D.cpp from 100 to 40 to account
+   for more high-freq signals, important for phase shift estimation.
+3. Added image rescaling: when the pixel size is less 1A, the image is rescaled
+   to 1A pixel size by Fourier cropping (CRescaleImage.cpp).
+
+Version 1.1.0 [04-17-2025]
+--------------------------
+Renamed from version 1.0.8
+
+Version 1.1.1 [05-03-2025]
+--------------------------
+Bug fix:
+1. FindCtf/CFindDefocus1D::mBrutalForceSearch: m_afPhaseRange is [min, max],
+   not [center, range].
+2. Delete FindCtf/GCalcSpectrum2D.cu, which is not used. The used one is
+   GCalcSpectrum.cu.
+
+Version 1.1.2 [05-05-2025]
+--------------------------
+Bug Fix:
+1. FindCtf/CFindCtfBase::Setup2: Removed the if statement, which prevents the
+   generation of new averaged spectrum.
+2. FindCtf/GCalcCTF1D & GCalcCTF2D: 1D generates CTF and 2D generates CTF^2.
+   Now the both generates 1D and 2D CTF.
+3. FindCtf/GCalcSpectrum: It generates amplitude spectrum whereas GCC1D and
+   GCC2D both correlate with CTF^2.
+4. FindCtf/GCC1D: see item 3. Now compare amplitude spectrum with abs(CTF).
+5. FindCtf/GCC2D: see item 4. Now compare amplitude spectrum with abs(CTF).
+Changes:
+1. FindCtf/CFindCtfBase::m_afResRange[1]: set it at 0.8 Nyquist. If it is
+   beyond 3.5A, cap it at 3.5A.
+2. FindCtf/CFindDefocus2D: reduced the B-factor from 100 to 16 to include
+   more high-res Thon rings into correlation.

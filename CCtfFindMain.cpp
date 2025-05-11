@@ -1,5 +1,6 @@
 #include "CMainInc.h"
 #include <Mrcfile/CMrcFileInc.h>
+#include <Util/Util_Time.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
@@ -23,20 +24,26 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	else if(strstr(argv[1], "--version"))
-	{	printf("GCtfFind version 1.0.5, Oct 04, 2023\n");
+	{	printf("GCtfFind version 1.1.2, May 08, 2025\n");
 		return 0;
 	}
-	//------------------------
+	//---------------------------
+	Util_Time utilTime;
+	utilTime.Measure();
+	//---------------------------
 	pInput->Parse(argc, argv);
 	bool bSame = mCheckSame();
 	if(bSame) return 1;
-	//---------------------------------------------
-	bool bSave = mCheckSave(pInput->m_acOutMrcFile);
+	//---------------------------
+	//bool bSave = mCheckSave(pInput->m_acOutMrcFile);
 	bool bGpu = mCheckGPU(pInput->m_iGpuID);
-	if(!bSave || !bGpu) return 1;
+	if(!bGpu) return 1;
 	//---------------------------
 	CProcessMain aProcessMain;
 	aProcessMain.DoIt();
+	//---------------------------
+	float fSec = utilTime.GetElapsedSeconds();
+	printf("Total time:  %.3f (s)\n\n", fSec);
 	return 0;
 }
 

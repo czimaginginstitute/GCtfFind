@@ -14,6 +14,8 @@ public:
 	float GetDefocusMax(bool bAngstrom);
 	float GetDefocusMin(bool bAngstrom);
 	CCTFParam* GetCopy(void);
+	void ChangePixelSize(float fNewPixSize);
+	//---------------------------
 	float m_fWavelength; // pixel
 	float m_fCs; // pixel
 	float m_fAmpContrast;
@@ -42,6 +44,7 @@ public:
 	void SetExtPhase(float fExtPhase, bool bDegree);
 	float GetExtPhase(bool bDegree);
 	void SetPixelSize(float fPixSize);
+	void ChangePixelSize(float fNewPixSize);
 	void SetDefocus
 	(  float fDefocusMin, // A
 	   float fDefocusMax, // A
@@ -54,6 +57,7 @@ public:
 	);
 	void SetParam(CCTFParam* pCTFParam); // copy values
 	CCTFParam* GetParam(bool bCopy);  // do not free
+	//---------------------------
 	float Evaluate
 	(  float fFreq, // relative frequency in [-0.5, +0.5]
 	   float fAzimuth
@@ -139,14 +143,12 @@ public:
 	void DoIt
 	( cufftComplex* gCmp,
 	  float* gfSpectrum,
-	  int* piCmpSize,
-	  bool bLog
+	  int* piCmpSize
 	);
 	void DoPad
 	( float* gfPadImg,   // image already padded
 	  float* gfSpectrum, // GPU buffer
-	  int* piPadSize,
-	  bool bLog
+	  int* piPadSize
 	);
 	void Logrithm
 	( float* gfSpectrum,
@@ -155,9 +157,24 @@ public:
 	void GenFullSpect
 	( float* gfHalfSpect,
 	  int* piCmpSize,
-	  float* gfFullSpect
+	  float* gfFullSpect,
+	  bool bFullPadded
 	);
 };
+
+class GSpectralCC2D
+{
+public:
+	GSpectralCC2D(void);
+	~GSpectralCC2D(void);
+	void SetSize(int* piSpectSize);
+	int DoIt(float* gfCTF, float* gfSpect);
+private:
+	int m_aiSpectSize[2];
+	float* m_gfCC;
+	float* m_pfCC;
+};
+
 
 class GBackground1D
 {
@@ -309,14 +326,15 @@ public:
 	~CGenAvgSpectrum(void);
 	void Clean(void);
 	void SetSizes(int* piImgSize,int iTileSize);
-	void DoIt(float* pfImage, float* gfAvgSpect, bool bLogSpect);
+	void DoIt(float* gfPadImg, float* gfAvgSpect, bool bLogSpect);
 	int m_aiCmpSize[2];
 private:
 	void mGenAvgSpectrum(void);
 	void mCalcTileSpectrum(int iTile);
 	void mExtractPadTile(int iTile);
+	//---------------------------
 	GCalcMoment2D* m_pGCalcMoment2D;
-	float* m_pfImage;
+	float* m_gfPadImg;
 	int m_aiImgSize[2];
 	int m_iTileSize;
 	int m_aiPadSize[2];
@@ -328,6 +346,35 @@ private:
 	float* m_gfTileSpect;
 	float* m_gfPadTile;
 	bool m_bLogSpect;
+};
+
+class GLowpass2D
+{
+public:
+	GLowpass2D(void);
+	~GLowpass2D(void);
+	void DoBFactor
+	( cufftComplex* gInCmp,
+	  cufftComplex* gOutCmp,
+	  int* piCmpSize,
+	  float fBFactor
+	);
+	cufftComplex* DoBFactor
+	( cufftComplex* gCmp,
+	  int* piCmpSize,
+	  float fBFactor
+	);
+	void DoCutoff
+	( cufftComplex* gInCmp,
+	  cufftComplex* gOutCmp,
+	  int* piCmpSize,
+	  float fCutoff
+	);
+	cufftComplex* DoCutoff
+	( cufftComplex* gCmp,
+	  int* piCmpSize,
+	  float fCutoff
+	);
 };
 
 class CCalcBackground
@@ -370,7 +417,29 @@ private:
 	float m_afResRange[2];
 	float m_fMean;
 	float m_fStd;     
-};
+};	// CSpectrumImage
+
+class CRescaleImage
+{
+public:
+	CRescaleImage(void);
+	~CRescaleImage(void);
+	void Clean(void);
+	void Setup(int* piRawSize, float fRawPixSize);
+	void DoIt(float* pfImage);
+	float* GetScaledImg(void); // GPU, padded image, do not free
+	int m_aiNewSize[2];
+	int m_aiPadSizeN[2];  // new image size padded
+	float m_fPixSizeN;    // new pixel size
+private:
+	int m_aiRawSize[2];
+	float* m_gfPadImgN; // scaled and padded image
+	float m_fRawPixSize;
+	float m_fBinning;
+	CCufft2D* m_pForFFT;
+	CCufft2D* m_pInvFFT;
+
+};	//CRescaleImage
 
 class CFindDefocus1D
 {
@@ -400,7 +469,7 @@ private:
 	float m_afPhaseRange[2]; // p0, delta in degree
 	float* m_gfRadialAvg;
 	int m_iCmpSize;
-	float* m_gfCTF1D;
+	float* m_gfCtf1D;
 };
 
 class CFindDefocus2D 
@@ -415,38 +484,58 @@ public:
 	( float fDfMean, float fAstRatio, 
 	  float fAstAngle, float fExtPhase
 	);
-	void DoIt(float* gfSpect, float fPhaseRange);
+	//---------------------------
+	void DoIt
+	( float* gfSpect, 
+	  float fPhaseRange
+	);
 	void Refine
 	( float* gfSpect, float fDfMeanRange,
 	  float fAstRange, float fAngRange,
 	  float fPhaseRange
 	);
+	//---------------------------
 	float GetDfMin(void);    // angstrom
 	float GetDfMax(void);    // angstrom
 	float GetAstRatio(void);
 	float GetAngle(void);    // degree
 	float GetExtPhase(void); // degree
 	float GetScore(void);
+	float GetCtfRes(void);   // angstrom
 private:
-	float mIterate
-	( float afAstRanges[2], float fDfMeanRange,
-	  float fPhaseRange, int iIterations
-	);
-	float mGridSearch(float fRatRange, float fAngRange);
+	void mIterate(void);
+	float mFindAstig(float* pfAstRange, float* pfAngRange);
+	float mRefineAstMag(float fAstRange);
+	float mRefineAstAng(float fAngRange);
+	float mRefineDfMean(float fDfRange);
 	float mRefinePhase(float fPhaseRange);
-	float mRefineDfMean(float fRatRange);
+	//---------------------------
 	float mCorrelate(float fAzimu, float fAstig, float fExtPhase);
+	void mCalcCtfRes(void);
+	//---------------------------
+	void mGetRange
+	( float fCentVal, float fRange,
+	  float* pfMinMax, float* pfRange
+	);
+	//---------------------------
 	float* m_gfSpect;
-	float* m_gfCTF2D;
+	float* m_gfCtf2D;
 	int m_aiCmpSize[2];
 	GCC2D* m_pGCC2D;
-	GCalcCTF2D m_aGCalcCTF2D;
+	GCalcCTF2D m_aGCalcCtf2D;
 	CCTFParam* m_pCtfParam;
+	//---------------------------
 	float m_fDfMean;
 	float m_fAstRatio;
 	float m_fAstAngle;
 	float m_fExtPhase;
+	float m_fCtfRes;    // angstrom
 	float m_fCCMax;
+	//---------------------------
+	float m_afPhaseRange[2];
+	float m_afDfRange[2];
+	float m_afAstRange[2];
+	float m_afAngRange[2];
 };
 
 class CFindCtfBase
@@ -465,6 +554,7 @@ public:
 	float* GenFullSpectrum(void);  // clean by caller
 	void SaveSpectrum(char* pcMrcFile);
 	void ShowResult(void);
+	//---------------------------
 	float m_fDfMin;
 	float m_fDfMax;
 	float m_fAstAng;   // degree
@@ -472,9 +562,13 @@ public:
 	float m_fScore;
 protected:
 	void mRemoveBackground(void);
+	void mLowpass(void);
 	void mInitPointers(void);
+	//---------------------------
 	CCTFTheory* m_pCtfTheory;
 	CGenAvgSpectrum* m_pGenAvgSpect;
+	//---------------------------
+	float m_fPixSize;
 	float* m_gfFullSpect;
 	float* m_gfRawSpect;
 	float* m_gfCtfSpect;

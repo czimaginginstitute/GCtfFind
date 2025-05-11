@@ -1,5 +1,7 @@
 #include "CMainInc.h"
 #include "MrcUtil/CMrcUtilInc.h"
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 using namespace GCTFFind;
 
@@ -20,13 +22,15 @@ bool CProcessMain::DoIt(void)
 	CAsyncSaveImages* pAsyncSaveImages = CAsyncSaveImages::GetInstance();
 	CFindSeriesCtfs* pFindSeriesCtfs = CFindSeriesCtfs::GetInstance();
 	CSaveCtfResults* pSaveCtfResults = CSaveCtfResults::GetInstance();
-	//----------------------------------------------------------------
+	//---------------------------
+	cudaSetDevice(pInput->m_iGpuID);
+	//---------------------------
 	pLoadAngFile->DoIt();
 	pInputFolder->ReadFiles();
 	pLoadImages->AsyncLoad();
 	pAsyncSaveImages->AsyncSave();
 	pFindSeriesCtfs->DoIt();
-	//----------------------
+	//---------------------------
 	pAsyncSaveImages->WaitForExit(36000.0f);
 	pSaveCtfResults->SaveCTF();
 	pSaveCtfResults->SaveImod();
