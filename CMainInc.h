@@ -74,6 +74,7 @@ public:
 	float m_fAzimuth;
 	float m_fExtPhase;
 	float m_fScore;
+	float m_fCtfRes;
 };
 
 class CInputFolder

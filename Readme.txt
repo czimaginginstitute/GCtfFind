@@ -87,3 +87,11 @@ Changes:
    beyond 3.5A, cap it at 3.5A.
 2. FindCtf/CFindDefocus2D: reduced the B-factor from 100 to 16 to include
    more high-res Thon rings into correlation.
+
+Version 1.1.3 [05-16-2025]
+--------------------------
+Bug Fix:
+1. FindCtf/GSpectralCC2D: Because of the changes in GCalcCTF2D, we should
+   correlate |CTF| - 0.5 with background subtracted amplitude spectrum.
+Changes:
+1. Added Thon ring resolution output both on screen and into file.

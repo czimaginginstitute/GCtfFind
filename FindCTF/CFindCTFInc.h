@@ -559,6 +559,7 @@ public:
 	float m_fDfMax;
 	float m_fAstAng;   // degree
 	float m_fExtPhase; // degree
+	float m_fCtfRes;   // angstrom
 	float m_fScore;
 protected:
 	void mRemoveBackground(void);

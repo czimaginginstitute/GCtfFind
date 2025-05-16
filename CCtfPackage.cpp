@@ -17,6 +17,7 @@ CCtfPackage::CCtfPackage(void)
 	m_fAzimuth = 0.0f;
 	m_fExtPhase = 0.0f;
 	m_fScore = 0.0f;
+	m_fCtfRes = 0.0f;
 	m_pfImage = 0L;
 	m_pfHalfSpect = 0L;
 	m_pfFullSpect = 0L;

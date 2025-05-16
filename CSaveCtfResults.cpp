@@ -46,16 +46,17 @@ void CSaveCtfResults::SaveCTF(void)
 	}
 	if(pFile == 0L) return;
 	//---------------------
-	fprintf(pFile, "# Idx   tilt     dfMin      dfMax   azimuth "
-	   "extPhase  score    fileName\n");
+	fprintf(pFile, "# Idx   tilt    dfMin(A)   dfMax(A)   azimuth(d) "
+	   "phase(d)  score    res(A)    fileName\n");
 	int iNumPackages = pInputFolder->GetNumPackages();	
 	for(int i=0; i<iNumPackages; i++)
 	{	pPackage = pInputFolder->GetPackage(i, !bClean);
-		fprintf(pFile, "%4d  %6.2f %10.2f %10.2f %7.2f " 
-		   "%7.2f %8.4f  %s\n", pPackage->m_iImgIdx,
+		fprintf(pFile, "%4d  %6.2f %10.2f %10.2f %10.2f " 
+		   "%8.2f %10.4f  %6.2f  %s\n", pPackage->m_iImgIdx,
 		   pPackage->m_fTilt,  pPackage->m_fDfMin,
 		   pPackage->m_fDfMax, pPackage->m_fAzimuth,
 		   pPackage->m_fExtPhase, pPackage->m_fScore,
+		   pPackage->m_fCtfRes,
 		   pPackage->m_acMrcFileName);
 	}
 	fclose(pFile);

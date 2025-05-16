@@ -135,14 +135,15 @@ void CFindSeriesCtfs::mProcessPackage(int iPackage)
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
 	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
 	//---------------------------
-	//if(iPackage == 0 || !pInputFolder->IsTomo()) mProcessFull();
+	/*if(iPackage == 0 || !pInputFolder->IsTomo()) mProcessFull();
 	if(iPackage == 0) 
 	{	mProcessFull();
 	}
 	else 
 	{	mProcessRefine();
-		if(m_pPackage->m_fScore <= 0) mProcessFull();
-	}
+		if(m_pPackage->m_fScore < 0.1) mProcessFull();
+	}*/
+	mProcessFull();
 	//--------------------
 	mDisplay();
 	//---------------------------
@@ -210,6 +211,7 @@ void CFindSeriesCtfs::mGetResults(void)
 	m_pPackage->m_fAzimuth = pFindCtf2D->m_fAstAng;
 	m_pPackage->m_fExtPhase = pFindCtf2D->m_fExtPhase;
 	m_pPackage->m_fScore = pFindCtf2D->m_fScore;
+	m_pPackage->m_fCtfRes = pFindCtf2D->m_fCtfRes;
 }
 
 void CFindSeriesCtfs::mDisplay(void)
@@ -225,14 +227,15 @@ void CFindSeriesCtfs::mDisplay(void)
 	//--------------------------------------------------
 	char acBuf1[128] = {'\0'};
 	sprintf(acBuf1, "%s", "   Index  dfmin     dfmax    "
-	   "azimuth  phase   score\n");
+	   "azimuth  phase   Res(A)  score\n");
 	strcat(acInfo, acBuf1);
 	//---------------------
 	char acBuf2[128] = {'\0'};
-	sprintf(acBuf2, "   %4d  %8.2f  %8.2f  %6.2f %6.2f %9.5f\n",
+	sprintf(acBuf2, "   %4d  %8.2f  %8.2f  %6.2f %6.2f  %6.2f %9.5f\n",
 	   m_pPackage->m_iImgIdx + 1, m_pPackage->m_fDfMin,
 	   m_pPackage->m_fDfMax,      m_pPackage->m_fAzimuth,
-	   m_pPackage->m_fExtPhase,   m_pPackage->m_fScore);
+	   m_pPackage->m_fExtPhase,   m_pPackage->m_fCtfRes,
+	   m_pPackage->m_fScore);
 	strcat(acInfo, acBuf2);
 	//---------------------
 	printf("%s\n", acInfo);
