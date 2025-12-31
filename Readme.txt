@@ -95,3 +95,13 @@ Bug Fix:
    correlate |CTF| - 0.5 with background subtracted amplitude spectrum.
 Changes:
 1. Added Thon ring resolution output both on screen and into file.
+
+Version 1.1.4[12-04-2025]
+-------------------------
+Bug Fix:
+Changes:
+1. Separate astigmatism determination from defocus and phase shift 
+   determination. They are implemented in FindCTF/GAstRatio.cu and 
+   FindCTF/GAstAngle.cu
+2. Iterative refinement of phase shift is constrained within the user
+   specified range.

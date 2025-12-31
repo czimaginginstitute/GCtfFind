@@ -142,9 +142,12 @@ bool CInputFolder::ReadFiles(void)
 	bSuccess = mGetDirName();
 	if(!bSuccess) return false;
 	strcpy(m_acSuffix, pInput->m_acInSuffix);
+	strcpy(m_acInSkips, pInput->m_acInSkips);
+	//----------------------
 	printf("Directory: %s\n", m_acDirName);
 	printf("Prefix:    %s\n", m_acPrefix);
 	printf("Suffix:    %s\n", m_acSuffix);
+	printf("Skips:     %s\n", m_acInSkips);
 	//-------------------------------------------------
 	// Read all the movies in the specified folder for
 	// batch processing.
@@ -269,6 +272,7 @@ bool CInputFolder::mReadFolder(void)
 			if(pcSuffix == 0L) continue;
 			if(strlen(pcSuffix) != iSuffix) continue;
 		}
+		if(mCheckSkips(pDirent->d_name)) continue;
 		//----------------------------------
 		// check if this is the latest file
 		//----------------------------------
@@ -291,6 +295,21 @@ bool CInputFolder::mReadFolder(void)
 		loadQueue.pop();
 	}
 	return true;
+}
+
+bool CInputFolder::mCheckSkips(const char* pcString)
+{
+	if(strlen(m_acInSkips) == 0) return false;
+	//---------------------------
+	char acBuf[512] = {'\0'};
+	strcpy(acBuf, m_acInSkips);
+	//---------------------------
+	char* pcToken = strtok(acBuf, ", ");
+	while(pcToken != 0L)
+	{	if(strstr(pcString, pcToken) != 0L) return true;
+		pcToken = strtok(0L, ", ");
+	}
+	return false;
 }
 
 bool CInputFolder::mGetSerial(char* pcInFile, char* pcSerial)
@@ -329,8 +348,8 @@ bool CInputFolder::mGetDirName(void)
 	int iNumChars = pcSlash - pcPrefix + 1;
 	memcpy(m_acDirName, pcPrefix, iNumChars);
 	//---------------------------------------
-	int iBytes = strlen(pcPrefix) - iNumChars;
-	if(iBytes > 0) memcpy(m_acPrefix, pcSlash + 1, iBytes);
+	memset(m_acPrefix, 0, sizeof(m_acPrefix));
+	strcpy(m_acPrefix, &pcSlash[1]);
 	return true;
 }
 

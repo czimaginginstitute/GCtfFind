@@ -38,6 +38,7 @@ CInput::CInput(void)
 	strcpy(m_acLogSpectTag, "-LogSpect");
 	strcpy(m_acSerialTag, "-Serial");
 	strcpy(m_acInSuffixTag, "-InSuffix");
+	strcpy(m_acInSkipsTag, "-InSkips");
 	strcpy(m_acGpuIDTag, "-Gpu");
 	//------------------------------------
 	m_fKv = 300.0f;
@@ -56,6 +57,7 @@ CInput::CInput(void)
 	memset(m_acOutCtfFile, 0, sizeof(m_acOutCtfFile));
 	memset(m_acAngFile, 0, sizeof(m_acAngFile));
 	memset(m_acInSuffix, 0, sizeof(m_acInSuffix));
+	memset(m_acInSkips, 0, sizeof(m_acInSkips));
 }
 
 CInput::~CInput(void)
@@ -105,6 +107,12 @@ void CInput::ShowTags(void)
 	  "  2. In this case, -InMrc and -InSuffix are jointly used to\n"
 	  "     to screen files for CTF estimation.\n\n", m_acInSuffixTag);
 	printf("%-15s\n"
+	  "  1. Comma separated string tokens used to exclude MRC files\n"
+	  "     from being loaded for CTF estimation. If any token is\n"
+	  "     found in a MRC file, it will not be loaded.\n"
+	  "  2. This input parameter is used only with -Serial 1.\n\n",
+	   m_acInSkipsTag);
+	printf("%-15s\n"
 	  "  1. Enale serial CTS estimation where there are multiple files\n"
 	  "     to be processed.\n"
 	  "  2. -Serial 1 enables serial processing.\n\n", m_acSerialTag);	
@@ -120,58 +128,61 @@ void CInput::Parse(int argc, char* argv[])
 	aParseArgs.Set(argc, argv);
 	aParseArgs.FindVals(m_acInMrcTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acInMrcFile);
-	//-------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acOutMrcTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acOutMrcFile);
-	//--------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acOutCtfTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acOutCtfFile);
-	//--------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acInSuffixTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acInSuffix);
-	//------------------------------------------
+	//---------------------------
+	aParseArgs.FindVals(m_acInSkipsTag, aiRange);
+	aParseArgs.GetVal(aiRange[0], m_acInSkips);
+	//---------------------------
 	aParseArgs.FindVals(m_acAngFileTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acAngFile);
-	//-------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acKvTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_fKv);
-	//----------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acCsTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_fCs);
-	//----------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acAmpContrastTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_fAmpContrast);
-	//-------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acPixelSizeTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_fPixSize);
-	//-----------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acExtPhaseTag, aiRange);
 	if(aiRange[1] > 2) aiRange[1] = 2;
 	aParseArgs.GetVals(aiRange, m_afExtPhase);
 	if(m_afExtPhase[1] < 0) m_afExtPhase[1] = 0.0f;
-	//---------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acTiltRangeTag, aiRange);
 	if(aiRange[1] > 2) aiRange[1] = 2;
 	aParseArgs.GetVals(aiRange, m_afTiltRange);
 	m_afTiltRange[0] = fmax(m_afTiltRange[0], -70.1f);
 	m_afTiltRange[1] = fmin(m_afTiltRange[1], 70.1f);
-	//-----------------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acTileSizeTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_iTileSize);
-	//----------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acLogSpectTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_iLogSpect);
-	//----------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acSerialTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_iSerial);
-	//--------------------------------------
+	//---------------------------
 	aParseArgs.FindVals(m_acGpuIDTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_iGpuID);
@@ -183,6 +194,7 @@ void CInput::mPrint(void)
 	printf("\n");
 	printf("%-15s  %s\n", m_acInMrcTag, m_acInMrcFile);
 	printf("%-15s  %s\n", m_acInSuffixTag, m_acInSuffix);
+	printf("%-15s  %s\n", m_acInSkipsTag, m_acInSkips);
 	printf("%-15s  %s\n", m_acOutMrcTag, m_acOutMrcFile);
 	printf("%-15s  %s\n", m_acOutCtfTag, m_acOutCtfFile);
 	printf("%-15s  %s\n", m_acAngFileTag, m_acAngFile);

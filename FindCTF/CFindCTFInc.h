@@ -318,6 +318,28 @@ private:
 	float m_fBFactor;
 };
 
+class GAstRatio
+{
+public:
+	GAstRatio(void);
+	~GAstRatio(void);
+	void DoIt(float* gfSpectrum, int* piCmpSize);
+	float m_fAstRatio;
+private:
+	void mCalcEigens(float* pfCovar);
+};
+
+class GAstAngle
+{
+public:
+	GAstAngle(void);
+	~GAstAngle(void);
+	void DoIt(float* gfSpectrum, int* piCmpSize);
+	float m_fAstAng;
+private:
+	void mCalcEigens(float* pfCovar);
+};
+
 
 class CGenAvgSpectrum
 {
@@ -459,6 +481,8 @@ public:
 	float m_fMaxCC;
 private:
 	void mBrutalForceSearch(float afResult[3]);
+	void mRefineDefocus(void);
+	void mRefinePhase(void);
 	void mCalcCTF(float fDefocus, float fExtPhase);
 	float mCorrelate(void);
 	CCTFParam* m_pCtfParam;
@@ -478,22 +502,33 @@ public:
 	CFindDefocus2D(void);
 	~CFindDefocus2D(void);
 	void Clean(void);
-	void Setup1(CCTFParam* pCtfParam, int* piCmpSize);
-	void Setup2(float afResRange[2]); // angstrom
-	void Setup3
-	( float fDfMean, float fAstRatio, 
-	  float fAstAngle, float fExtPhase
+	void Setup(CCTFParam* pCtfParam, int* piCmpSize);
+	void SetResRange(float afResRange[2]); // angstrom
+	void SetInitVals
+	( float fDfMean, 
+	  float fAstRatio, 
+	  float fAstAngle,  // degree
+	  float fExtPhase   // degree
 	);
 	//---------------------------
 	void DoIt
-	( float* gfSpect, 
-	  float fPhaseRange
+	( float* gfSpect,
+	  float* pfDfRange,
+	  float* pfPhaseRange
+	);
+	void RefineParam
+	( float* gfSpect,
+	  float fMinVal,
+	  float fMaxVal,
+	  int iParam,
+	  int iIterations
 	);
 	void Refine
-	( float* gfSpect, float fDfMeanRange,
-	  float fAstRange, float fAngRange,
+	( float* gfSpect, 
+	  float fDfMeanRange,
 	  float fPhaseRange
 	);
+	void CalcCtfRes(float* gfSpect);
 	//---------------------------
 	float GetDfMin(void);    // angstrom
 	float GetDfMax(void);    // angstrom
@@ -503,20 +538,18 @@ public:
 	float GetScore(void);
 	float GetCtfRes(void);   // angstrom
 private:
-	void mIterate(void);
-	float mFindAstig(float* pfAstRange, float* pfAngRange);
-	float mRefineAstMag(float fAstRange);
-	float mRefineAstAng(float fAngRange);
-	float mRefineDfMean(float fDfRange);
-	float mRefinePhase(float fPhaseRange);
-	//---------------------------
-	float mCorrelate(float fAzimu, float fAstig, float fExtPhase);
-	void mCalcCtfRes(void);
+	float mCorrelate
+	( float fDfMean,
+	  float fAstRatio, // (fmax - fmin) / (fmax + fmin) 
+	  float fAstAngle, // degree
+	  float fExtPhase  // degree
+	);
 	//---------------------------
 	void mGetRange
 	( float fCentVal, float fRange,
 	  float* pfMinMax, float* pfRange
 	);
+	float mFitNewVal(float* x, float* y, int iSize);
 	//---------------------------
 	float* m_gfSpect;
 	float* m_gfCtf2D;
@@ -530,12 +563,7 @@ private:
 	float m_fAstAngle;
 	float m_fExtPhase;
 	float m_fCtfRes;    // angstrom
-	float m_fCCMax;
-	//---------------------------
-	float m_afPhaseRange[2];
-	float m_afDfRange[2];
-	float m_afAstRange[2];
-	float m_afAngRange[2];
+	float m_fMaxCC;
 };
 
 class CFindCtfBase
@@ -576,7 +604,7 @@ protected:
 	int m_aiCmpSize[2];
 	int m_aiImgSize[2];
 	float m_afResRange[2];
-	float m_fPhaseRange; // for searching extra phase in degree
+	float m_afPhaseRange[2]; // for searching extra phase in degree
 };
 
 class CFindCtf1D : public CFindCtfBase
@@ -611,8 +639,18 @@ public:
 	  float afExtPhase[2]
 	);
 private:
+	void mDoIt
+	( float fDfRange,
+	  float fAstMagRange,
+	  float fAstAngRange,
+	  float fPhaseRange,
+	  int iIterations
+	);
+	void mEstAstigmatism(void);
 	void mGetResults(void);
+	//---------------------------
 	CFindDefocus2D* m_pFindDefocus2D;
+	float m_fAstRatio;
 };
 
 class CFindCtfHelp

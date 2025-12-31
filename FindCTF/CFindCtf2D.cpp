@@ -34,21 +34,35 @@ void CFindCtf2D::Setup1(CCTFTheory* pCtfTheory)
 {
 	this->Clean();
 	CFindCtf1D::Setup1(pCtfTheory);
-	//-----------------------------
+	//--------------------------
 	m_pFindDefocus2D = new CFindDefocus2D;
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
-	m_pFindDefocus2D->Setup1(pCtfParam, m_aiCmpSize);
-	m_pFindDefocus2D->Setup2(m_afResRange);
+	m_pFindDefocus2D->Setup(pCtfParam, m_aiCmpSize);
+	m_pFindDefocus2D->SetResRange(m_afResRange);
 }
 
 void CFindCtf2D::Do2D(void)
 {	
 	CFindCtf1D::Do1D();
+	mEstAstigmatism();
 	//---------------------------
-	m_pFindDefocus2D->Setup2(m_afResRange);
+	m_pFindDefocus2D->SetResRange(m_afResRange);
 	float fDfMean = (m_fDfMin + m_fDfMax) * 0.5f;
-	m_pFindDefocus2D->Setup3(fDfMean, 0.0f, 0.0f, m_fExtPhase);
-	m_pFindDefocus2D->DoIt(m_gfCtfSpect, m_fPhaseRange);
+        m_pFindDefocus2D->SetInitVals(fDfMean, m_fAstRatio,
+           m_fAstAng, m_fExtPhase);
+	//---------------------------
+	float afDfRange[] = {m_fDfMax - 3000.0f, m_fDfMax + 3000.0f};
+	afDfRange[0] = fmax(afDfRange[0], 3000.0f);
+	//---------------------------
+	float afPhaseRange[] = {m_afPhaseRange[0], m_afPhaseRange[1]};
+	m_pFindDefocus2D->DoIt(m_gfCtfSpect, afDfRange, afPhaseRange);
+	mGetResults();
+	//---------------------------
+	float fPhaseRange = m_afPhaseRange[1] - m_afPhaseRange[0];
+	mDoIt(3000.0f, 0.10f, 20, fPhaseRange, 5);
+	mDoIt(1000.0f, 0.05f, 10.0f, fPhaseRange * 0.5f, 5);
+	//---------------------------
+	m_pFindDefocus2D->CalcCtfRes(m_gfCtfSpect);
 	mGetResults();
 }
 
@@ -58,13 +72,54 @@ void CFindCtf2D::Refine
 	float afAstAngle[2],
 	float afExtPhase[2]
 )
-{	m_pFindDefocus2D->Setup2(m_afResRange);
-	m_pFindDefocus2D->Setup3(afDfMean[0], afAstRatio[0],
+{	m_pFindDefocus2D->SetResRange(m_afResRange);
+	m_pFindDefocus2D->SetInitVals(afDfMean[0], afAstRatio[0],
 	   afAstAngle[0], afExtPhase[0]);
 	//---------------------------
-	m_pFindDefocus2D->Refine(m_gfCtfSpect, afDfMean[1],
-	   afAstRatio[1], afAstAngle[1], afExtPhase[1]);
+	m_pFindDefocus2D->Refine(m_gfCtfSpect, afDfMean[1], afExtPhase[1]);
+	m_pFindDefocus2D->CalcCtfRes(m_gfCtfSpect);
 	mGetResults();
+}
+
+void CFindCtf2D::mDoIt
+(	float fDfRange,
+ 	float fAstMagRange,
+	float fAstAngRange, 
+	float fPhaseRange, 
+	int iIterations
+)
+{	float fDfMean = (m_fDfMin + m_fDfMax) * 0.5f;
+	float fMinDf = fDfMean - 0.5f * fDfRange;
+	float fMaxDf = fDfMean + 0.5f * fDfRange;
+	fMinDf = fmaxf(fMinDf, 2000.0f);
+	m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
+           fMinDf, fMaxDf, 0, iIterations);
+	//---------------------------
+	float fMinRatio = m_fAstRatio - 0.5f * fAstMagRange;
+	float fMaxRatio = m_fAstRatio + 0.5f * fAstMagRange;
+	if(fMinRatio < 0.0f) fMinRatio = 0.0f;
+	if(fMaxRatio > 0.1f) fMaxRatio = 0.1f;
+        m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
+           fMinRatio, fMaxRatio, 1, iIterations);
+	//---------------------------
+        m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
+           m_fAstAng - 0.5f * fAstAngRange,
+           m_fAstAng + 0.5f * fAstAngRange,
+           2, iIterations);
+	//---------------------------
+	if(fPhaseRange <= 0.5f)
+	{	mGetResults();
+		return;
+	}
+	//---------------------------
+        float fMinPhase = 0.0f;
+        float fMaxPhase = m_fExtPhase + fPhaseRange;
+	fMinPhase = fmax(fMinPhase, m_afPhaseRange[0]);
+	fMaxPhase = fmin(fMaxPhase, m_afPhaseRange[1]);
+	m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
+	   fMinPhase, fMaxPhase, 3, iIterations);
+	//---------------------------
+        mGetResults();
 }
 
 void CFindCtf2D::mGetResults(void)
@@ -75,4 +130,19 @@ void CFindCtf2D::mGetResults(void)
 	m_fExtPhase = m_pFindDefocus2D->GetExtPhase();
 	m_fScore = m_pFindDefocus2D->GetScore();
 	m_fCtfRes = m_pFindDefocus2D->GetCtfRes();
+}
+
+void CFindCtf2D::mEstAstigmatism(void)
+{
+	GAstAngle astAngle;
+	astAngle.DoIt(m_gfCtfSpect, m_aiCmpSize);
+	m_fAstAng = astAngle.m_fAstAng;
+	//---------------------------
+	GAstRatio astRatio;
+	astRatio.DoIt(m_gfCtfSpect, m_aiCmpSize);
+	m_fAstRatio = astRatio.m_fAstRatio;
+	m_fAstRatio = fminf(m_fAstRatio, 0.1f);
+	//---------------------------
+	printf("Astigmatism ratio & angle: %.3f  %.2f\n\n",
+	   m_fAstRatio, m_fAstAng);
 }

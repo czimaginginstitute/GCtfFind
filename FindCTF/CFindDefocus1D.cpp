@@ -68,23 +68,38 @@ void CFindDefocus1D::DoIt
 	m_fBestDf = afResult[0];
 	m_fBestPhase = afResult[1];
 	m_fMaxCC = afResult[2];
+	//---------------------------
+		
+	//mRefineDefocus();
+	//mRefinePhase();
+
+	/*
+	float* pfSpect = new float[m_iCmpSize];
+	cudaMemcpy(pfSpect, m_gfRadialAvg, sizeof(float) * m_iCmpSize,
+	   cudaMemcpyDefault);
+	for(int i=0; i<m_iCmpSize; i++)
+	{	printf("%4d  %.4e\n", i, pfSpect[i]);
+	}
+	delete[] pfSpect;
+	printf("\n");
+	*/
 }
 
 //--------------------------------------------------------------------
 // Search both defocus and phase shift.
 //--------------------------------------------------------------------
 void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
-{	
+{
 	int iDfSteps = 501;
 	float fDfRange = m_afDfRange[1] - m_afDfRange[0];
 	float fDfStep = fDfRange / (iDfSteps - 1);
-	if(fDfStep < 10) fDfStep = 10.0f;
+	if(fDfStep < 100) fDfStep = 100.0f;
 	iDfSteps = (int)(fDfRange / fDfStep) / 2 * 2 + 1;
 	//-----------------
 	int iPsSteps = 37;
 	float fPsRange = m_afPhaseRange[1] - m_afPhaseRange[0];
 	float fPsStep = fPsRange / (iPsSteps - 1);
-	if(fPsStep ==  0) iPsSteps = 1;
+	if(fPsStep <  1.0f) iPsSteps = 1.0f;
 	else iPsSteps = (int)(fPsRange / fPsStep) / 2 * 2 + 1;
 	//-----------------
 	int iPoints = iDfSteps * iPsSteps;
@@ -99,8 +114,8 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 		iPhase = i / iDfSteps;
 		fDefocus = m_afDfRange[0] + iFocus * fDfStep;
 		fPhase = m_afPhaseRange[0] + iPhase * fPsStep;
-		if(fPhase < 0) fPhase = 0.0f;
-		else if(fPhase > 150.0f) fPhase = 150.0f;
+		if(fPhase < m_afPhaseRange[0]) continue;
+		else if(fPhase > m_afPhaseRange[1]) continue;
 		//----------------
 		mCalcCTF(fDefocus, fPhase);
 		pfCCs[i] = mCorrelate();
@@ -110,12 +125,73 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 			afResult[2] = pfCCs[i];
 		}
 		/*			
+		if(i % 10 != 0) continue;					
 		printf("%3d  %8.2f  %8.2f  %8.4f  %8.2f %8.2f  %8.4f\n", i,
 		   fDefocus, fPhase, pfCCs[i],
 		   afResult[0], afResult[1], afResult[2]);
 		*/
 	}
 	if(pfCCs != 0L) delete[] pfCCs;
+}
+
+void CFindDefocus1D::mRefineDefocus(void)
+{
+	float fStep = 100.0f;
+	//---------------------------
+	for(int i=1; i<500; i++)
+	{	float fDf = m_afDfRange[0] - fStep * i;
+		if(fDf < 1000) break;
+		//-------------------
+		mCalcCTF(fDf, m_fBestPhase);
+		float fCC = mCorrelate();
+		//-------------------
+		if(fCC > m_fMaxCC)
+		{	m_fMaxCC = fCC;
+			m_fBestDf = fDf;
+		}
+	}
+	//---------------------------
+	for(int i=1; i<500; i++)
+	{	float fDf = m_afDfRange[1] + fStep * i;
+		mCalcCTF(fDf, m_fBestPhase);
+		float fCC = mCorrelate();
+		if(fCC > m_fMaxCC)
+		{	m_fMaxCC = fCC;
+			m_fBestDf = fDf;
+		}
+	}
+}
+
+void CFindDefocus1D::mRefinePhase(void)
+{
+	float fStep = 1.0f;
+	float fInitPhase = m_fBestPhase;
+	//---------------------------
+	for(int i=0; i<180; i++)
+	{	float fPhase = fInitPhase - i * fStep;
+		if(fPhase < m_afPhaseRange[0]) break;
+		//-------------------
+		mCalcCTF(m_fBestDf, fPhase);
+		float fCC = mCorrelate();
+		//-------------------
+		if(fCC > m_fMaxCC)
+		{	m_fMaxCC = fCC;
+			m_fBestPhase = fPhase;
+		}
+	}
+	//---------------------------
+	fInitPhase = m_fBestPhase;
+	for(int i=0; i<180; i++)
+	{	float fPhase = fInitPhase + i * fStep;
+		if(fPhase > m_afPhaseRange[1]) break;
+		//-------------------
+		mCalcCTF(m_fBestDf, fPhase);
+		float fCC = mCorrelate();
+		if(fCC > m_fMaxCC)
+		{	m_fMaxCC = fCC;
+			m_fBestPhase = fPhase;
+		}
+	}
 }
 
 void CFindDefocus1D::mCalcCTF(float fDefocus, float fExtPhase)

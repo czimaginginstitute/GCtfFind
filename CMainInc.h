@@ -20,6 +20,7 @@ public:
 	char m_acOutCtfFile[256];
 	char m_acAngFile[256];
 	char m_acInSuffix[256];
+	char m_acInSkips[256];
 	float m_fKv;
 	float m_fCs;
 	float m_fAmpContrast;
@@ -50,6 +51,7 @@ private:
 	char m_acLogSpectTag[32];
 	char m_acSerialTag[32];
 	char m_acInSuffixTag[32];
+	char m_acInSkipsTag[32];
 	char m_acGpuIDTag[32];
 	static CInput* m_pInstance;
 };
@@ -101,10 +103,13 @@ private:
 	bool mOpenDir(void);
 	bool mGetDirName(void);
 	bool mGetSerial(char* pcFullName, char* pcSerial);
+	bool mCheckSkips(const char* pcString);
 	void mClean(void);
+	//---------------------------
 	char m_acDirName[256];
 	char m_acPrefix[256];
 	char m_acSuffix[256];
+	char m_acInSkips[256];
 	CCtfPackage** m_ppPackages;
 	int m_iNumPackages;
 	int m_iZeroTilt;

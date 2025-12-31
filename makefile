@@ -22,6 +22,8 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GSpectralCC2D.cu \
 	 ./FindCTF/GCC1D.cu \
 	 ./FindCTF/GCC2D.cu \
+	 ./FindCTF/GAstRatio.cu \
+	 ./FindCTF/GAstAngle.cu \
 	 ./FindCTF/GLowpass2D.cu
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------

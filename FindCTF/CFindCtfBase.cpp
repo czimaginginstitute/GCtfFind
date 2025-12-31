@@ -18,10 +18,10 @@ CFindCtfBase::CFindCtfBase(void)
 	m_fDfMax = 0.0f;
 	m_fAstAng = 0.0f;
 	m_fExtPhase = 0.0f;
-	m_fPhaseRange = 0.0f;
 	m_fScore = 0.0f;
 	m_fPixSize = 1.0f;
 	mInitPointers();
+	memset(m_afPhaseRange, 0, sizeof(m_afPhaseRange));
 	memset(m_aiImgSize, 0, sizeof(m_aiImgSize));
 }
 
@@ -78,7 +78,11 @@ void CFindCtfBase::Setup2(int* piImgSize)
 void CFindCtfBase::SetPhase(float fInitPhase, float fPhaseRange)
 {
 	m_fExtPhase = fInitPhase;
-	m_fPhaseRange = fPhaseRange;
+	m_afPhaseRange[0] = fInitPhase - 0.5f * fPhaseRange;
+	m_afPhaseRange[1] = fInitPhase + 0.5f * fPhaseRange;
+	//---------------------------
+	m_afPhaseRange[0] = fmaxf(m_afPhaseRange[0], 0.0f);
+	m_afPhaseRange[1] = fminf(m_afPhaseRange[1], 150.0f);
 }
 
 void CFindCtfBase::SetHalfSpect(float* pfCtfSpect)
@@ -113,6 +117,7 @@ void CFindCtfBase::GenHalfSpectrum(float* gfPadImg)
 	//---------------------------
 	m_pGenAvgSpect->DoIt(gfPadImg, m_gfRawSpect, bLogSpect);
 	mRemoveBackground();
+	mLowpass();
 }
 
 float* CFindCtfBase::GenFullSpectrum(void)
@@ -163,23 +168,7 @@ void CFindCtfBase::mRemoveBackground(void)
 	GRmBackground2D rmBackground;
 	rmBackground.DoIt(m_gfRawSpect, m_gfCtfSpect, bLogSpect,
 	   m_aiCmpSize, fMinRes);
-	//--------------------------------------------
-	// do not threshold if the spectrum is flat.
-	//--------------------------------------------
-	GCalcMoment2D calcMoment2D;
-	calcMoment2D.SetSize(m_aiCmpSize, false);
-	float fMean = calcMoment2D.DoIt(m_gfCtfSpect, 1, true);
-	float fStd = calcMoment2D.DoIt(m_gfCtfSpect, 2, true);
-	fStd = fStd - fMean * fMean;
-	if(fStd < 1.0f) return;
-	//-----------------	
-	fStd = (float)sqrtf(fStd);
-	float fMin = fMean - 1.0f * fStd;
-	float fMax = fMean + 1.0f * fStd;
-	GThreshold2D threshold2D;
-	//threshold2D.DoIt(m_gfCtfSpect, fMin, fMax, m_aiCmpSize, false);
-	//-----------------
-	mLowpass();
+	//---------------------------
 	/*	
 	CSaveImages saveImages;
 	saveImages.OpenFile("/home/shawn.zheng/Temp/TestRm.mrc");

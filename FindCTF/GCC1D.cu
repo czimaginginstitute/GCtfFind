@@ -29,15 +29,16 @@ static __global__ void mGCalculate
 	s_gfStd1[threadIdx.x] = 0.0f;
 	s_gfStd2[threadIdx.x] = 0.0f;
 	__syncthreads();
-	//--------------
+	//---------------------------
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	if(x >= iSize) return;
-	//--------------------
+	//---------------------------
 	if(x >= fFreqLow && x < fFreqHigh)
-	{	float fCTF = x / (iSize - 1.0f);
-		float fSpec = gfSpectrum[x]; 
-		fCTF = (fabsf(gfCTF[x]) - 0.5f) 
-		   * expf(-fBFactor * fCTF * fCTF);
+	{	float fX = x / (iSize - 1.0f);
+		float fSpec = gfSpectrum[x];
+		float fCTF = fabsf(gfCTF[x]);
+		//-------------------
+		fCTF = (fCTF - 0.5f) * expf(-fBFactor * fX * fX);
 		s_gfCC[threadIdx.x] = fCTF * fSpec;
 		s_gfStd1[threadIdx.x] = fCTF * fCTF;
 		s_gfStd2[threadIdx.x] = fSpec * fSpec;
