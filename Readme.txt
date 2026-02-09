@@ -96,8 +96,8 @@ Bug Fix:
 Changes:
 1. Added Thon ring resolution output both on screen and into file.
 
-Version 1.1.4[12-04-2025]
--------------------------
+Version 1.1.4 [12-04-2025]
+--------------------------
 Bug Fix:
 Changes:
 1. Separate astigmatism determination from defocus and phase shift 
@@ -105,3 +105,9 @@ Changes:
    FindCTF/GAstAngle.cu
 2. Iterative refinement of phase shift is constrained within the user
    specified range.
+
+Version 1.1.5 [02-07-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. Change the makefile to support Cuda 13
