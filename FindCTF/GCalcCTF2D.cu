@@ -28,7 +28,9 @@ static __global__ void mGCalculate
 	float fS2 = fX * fX + fY * fY;
 	float fW2 = s_gfCtfParam[0] * s_gfCtfParam[0];
 	//-----------------
-	fX = atanf(fY / (fX + (float)1e-30));
+	if(fX == 0 && fY >= 0) fX = 1.5707f;
+	else if(fX == 0 && fY < 0) fX = -1.5707f;
+	else fX = atanf(fY / fX);
 	fX = fDfMean + fDfSigma * cosf(2.0f * (fX - fAzimuth));
 	//-----------------
 	fX = -sinf(fExtPhase + 3.1415926f * s_gfCtfParam[0] * fS2
@@ -57,11 +59,14 @@ static __global__ void mGEmbedCtf
 )
 {	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	if(y >= iCmpY) return;
-	//--------------------
+	//---------------------------
 	float fY = (y - iCmpY * 0.5f) / iCmpY;
 	float fX = (blockIdx.x - (float)gridDim.x) * 0.5f / gridDim.x;
-	fX = sqrtf(fX * fX + fY * fY);
-	if(fX < fMinFreq || fX > fMaxFreq) return;
+	float fR = sqrtf(fX * fX + fY * fY);
+	if(fR < fMinFreq || fR > fMaxFreq) return;
+	//---------------------------
+	fR = atanf(fY / fX) * 180.0f / 3.141593f;
+	if(fabsf(fR) > 60) return;
 	//----------------------------------------------
 	// fX is negative frequency, apply symmetry here
 	//----------------------------------------------

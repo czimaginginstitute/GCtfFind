@@ -1,4 +1,5 @@
 #include "CMainInc.h"
+#include "Lpp/CLppInc.h"
 #include "FindCTF/CFindCTFInc.h"
 #include "Util/CUtilInc.h"
 #include "MrcUtil/CMrcUtilInc.h"
@@ -80,6 +81,7 @@ void CFindSeriesCtfs::DoIt(void)
 		strcpy(acLog, acBuf);
 		//--------------------------
 		utilTime.Measure();
+		//mTestLpp(m_iNumDone);
 		mRescaleImage(m_iNumDone);
 		mSetupFindCtf();
 		//-----------------------------------------------
@@ -103,6 +105,20 @@ void CFindSeriesCtfs::DoIt(void)
 	printf("%s", acLog);
 	//----------------------------------
 	this->Clean();
+}
+
+void CFindSeriesCtfs::mTestLpp(int iPackage)
+{
+	CProcessLpp* pProcessLpp = CProcessLpp::GetInstance();
+	if(iPackage == 0) 
+	{	pProcessLpp->Setup(m_pPackage->m_aiImgSize, 10.0f);
+	}
+	pProcessLpp->DoIt(m_pPackage->m_pfImage);
+	//---------------------------
+	int iLast = m_iNumPackages - 1;
+	if(iPackage < iLast) return;
+	//---------------------------
+	pProcessLpp->PostProcess();
 }
 
 void CFindSeriesCtfs::mRescaleImage(int iPackage)

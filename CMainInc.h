@@ -15,6 +15,7 @@ public:
 	~CInput(void);
 	void ShowTags(void);
 	void Parse(int argc, char* argv[]);
+	void GetOutFile(const char* pcSuffix, char* acOutFile);
 	char m_acInMrcFile[256];
 	char m_acOutMrcFile[256];
 	char m_acOutCtfFile[256];
@@ -25,6 +26,7 @@ public:
 	float m_fCs;
 	float m_fAmpContrast;
 	float m_fPixSize;
+	float m_fAstRange;
 	float m_afExtPhase[2];
 	float m_afTiltRange[2];
 	int m_iTileSize;
@@ -46,6 +48,7 @@ private:
 	char m_acCsTag[32];
 	char m_acAmpContrastTag[32];
 	char m_acPixelSizeTag[32];
+	char m_acAstRangeTag[32];
 	char m_acExtPhaseTag[32];
 	char m_acTileSizeTag[32];
 	char m_acLogSpectTag[32];
@@ -142,6 +145,7 @@ public:
 	void DoIt(void);
 private:
 	CFindSeriesCtfs(void);
+	void mTestLpp(int iPackage);
 	void mRescaleImage(int iPackage);
 	void mSetupFindCtf(void);
 	void mProcessPackage(int iPackage);

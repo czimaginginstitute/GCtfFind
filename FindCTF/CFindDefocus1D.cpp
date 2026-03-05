@@ -69,9 +69,8 @@ void CFindDefocus1D::DoIt
 	m_fBestPhase = afResult[1];
 	m_fMaxCC = afResult[2];
 	//---------------------------
-		
-	//mRefineDefocus();
-	//mRefinePhase();
+	mRefineDefocus();
+	mRefinePhase();
 
 	/*
 	float* pfSpect = new float[m_iCmpSize];
@@ -203,10 +202,15 @@ void CFindDefocus1D::mCalcCTF(float fDefocus, float fExtPhase)
 
 float CFindDefocus1D::mCorrelate(void)
 {
+	float fCutOn = (m_iCmpSize - 1) * 0.01f;
+	float fCutOff = (m_iCmpSize - 1) * 0.9f;
+	//---------------------------
 	float fRes1 = ((m_iCmpSize - 1) * 2) * m_pCtfParam->m_fPixelSize;
 	float fMinFreq = fRes1 / m_afResRange[0];
 	float fMaxFreq = fRes1 / m_afResRange[1];
-	//---------------------------------------
+	if(fMinFreq < fCutOn) fMinFreq = fCutOn;
+	if(fMaxFreq > fCutOff) fMaxFreq = fCutOff;
+	//---------------------------
 	m_pGCC1D->Setup(fMinFreq, fMaxFreq, 1.0f);
 	float fCC = m_pGCC1D->DoIt(m_gfCtf1D, m_gfRadialAvg);
 	return fCC;

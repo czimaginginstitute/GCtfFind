@@ -1,16 +1,20 @@
 PRJHOME = $(shell pwd)
 CONDA = $(HOME)/miniconda3
-CUDAHOME = $(HOME)/nvidia/cuda-13.0
+CUDAHOME = $(HOME)/nvidia/cuda-13.1
 CUDAINC = $(CUDAHOME)/include
 CUDALIB = $(CUDAHOME)/lib64
 PRJINC = $(PRJHOME)/Include
 PRJLIB = $(PRJHOME)/Lib
 #------------------------------
 CUSRCS = ./Util/GAddImages.cu \
+	 ./Util/GCalcMeanStd.cu \
+	 ./Util/GCalcCC2D.cu \
 	 ./Util/GCalcMoment2D.cu \
 	 ./Util/GNormalize2D.cu \
 	 ./Util/GThreshold2D.cu \
 	 ./Util/GFtResize2D.cu \
+	 ./Lpp/GCalcPhase2D.cu \
+	 ./Lpp/GFindTwinPeaks.cu \
 	 ./FindCTF/GCalcCTF1D.cu \
 	 ./FindCTF/GCalcCTF2D.cu \
 	 ./FindCTF/GCalcSpectrum.cu \
@@ -29,6 +33,7 @@ CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
 	./Util/CSimpleFuncs.cpp \
+	./Util/CPad2D.cpp \
 	./Util/CParseArgs.cpp \
 	./Util/CRegSpline.cpp \
 	./Util/CRegSpline2.cpp \
@@ -50,6 +55,7 @@ SRCS = ./CInput.cpp \
 	./FindCTF/CFindCtf1D.cpp \
 	./FindCTF/CFindCtf2D.cpp \
 	./FindCTF/CFindCtfBase.cpp \
+	./Lpp/CProcessLpp.cpp \
 	./CCtfPackage.cpp \
 	./CInputFolder.cpp \
 	./CSaveCtfResults.cpp \
@@ -65,8 +71,11 @@ CC = g++
 CFLAG = -c -g -pthread -m64
 NVCC = $(CUDAHOME)/bin/nvcc -std=c++11
 CUFLAG = -Xptxas -dlcm=ca -O2 \
-	-gencode arch=compute_75,code=sm_80 \
-	-gencode arch=compute_86,code=sm_86
+	-gencode arch=compute_75,code=sm_75 \
+	-gencode arch=compute_80,code=sm_80 \
+	-gencode arch=compute_86,code=sm_86 \
+	-gencode arch=compute_89,code=sm_89 \
+	-gencode arch=compute_90,code=sm_90
 #-----------------------------------------
 cuda: $(CUCPPS)
 

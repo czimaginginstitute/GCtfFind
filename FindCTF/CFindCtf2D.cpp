@@ -42,7 +42,10 @@ void CFindCtf2D::Setup1(CCTFTheory* pCtfTheory)
 }
 
 void CFindCtf2D::Do2D(void)
-{	
+{
+	CInput* pInput = CInput::GetInstance();
+	float fAstRange = pInput->m_fAstRange;
+	//---------------------------	
 	CFindCtf1D::Do1D();
 	mEstAstigmatism();
 	//---------------------------
@@ -52,18 +55,25 @@ void CFindCtf2D::Do2D(void)
            m_fAstAng, m_fExtPhase);
 	//---------------------------
 	float afDfRange[] = {m_fDfMax - 3000.0f, m_fDfMax + 3000.0f};
-	afDfRange[0] = fmax(afDfRange[0], 3000.0f);
+	afDfRange[0] = fmax(afDfRange[0], 2000.0f);
 	//---------------------------
 	float afPhaseRange[] = {m_afPhaseRange[0], m_afPhaseRange[1]};
 	m_pFindDefocus2D->DoIt(m_gfCtfSpect, afDfRange, afPhaseRange);
 	mGetResults();
 	//---------------------------
+	
 	float fPhaseRange = m_afPhaseRange[1] - m_afPhaseRange[0];
-	mDoIt(3000.0f, 0.10f, 20, fPhaseRange, 5);
-	mDoIt(1000.0f, 0.05f, 10.0f, fPhaseRange * 0.5f, 5);
+	mDoIt(8000.0f, fAstRange, 180.0, fPhaseRange, 5);
 	//---------------------------
+	fAstRange = fmaxf(fAstRange * 0.5f, 0.05f);
+	mDoIt(4000.0f, fAstRange * 0.5f, 60.0f, fPhaseRange * 0.5f, 5);
+	//---------------------------
+	for(int i=0; i<5; i++)
+	{	mDoIt(2000.0f, 0.1f, 10.0f, fPhaseRange * 0.125f, 5);
+	}
 	m_pFindDefocus2D->CalcCtfRes(m_gfCtfSpect);
 	mGetResults();
+	
 }
 
 void CFindCtf2D::Refine
@@ -88,36 +98,41 @@ void CFindCtf2D::mDoIt
 	float fPhaseRange, 
 	int iIterations
 )
-{	float fDfMean = (m_fDfMin + m_fDfMax) * 0.5f;
+{	CInput* pInput = CInput::GetInstance();
+	float fMaxAstRatio = pInput->m_fAstRange;
+	//---------------------------
+	float fDfMean = (m_fDfMin + m_fDfMax) * 0.5f;
 	float fMinDf = fDfMean - 0.5f * fDfRange;
 	float fMaxDf = fDfMean + 0.5f * fDfRange;
 	fMinDf = fmaxf(fMinDf, 2000.0f);
-	m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
-           fMinDf, fMaxDf, 0, iIterations);
+	float fStepDf = (fMaxDf - fMinDf) / 100.0f;
 	//---------------------------
-	float fMinRatio = m_fAstRatio - 0.5f * fAstMagRange;
-	float fMaxRatio = m_fAstRatio + 0.5f * fAstMagRange;
-	if(fMinRatio < 0.0f) fMinRatio = 0.0f;
-	if(fMaxRatio > 0.1f) fMaxRatio = 0.1f;
-        m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
-           fMinRatio, fMaxRatio, 1, iIterations);
+	m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
+           fMinDf, fMaxDf, fStepDf, 0);
 	//---------------------------
         m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
            m_fAstAng - 0.5f * fAstAngRange,
            m_fAstAng + 0.5f * fAstAngRange,
-           2, iIterations);
+           2.0f, 2);
+	//---------------------------
+	float fMinRatio = m_fAstRatio - 0.5f * fAstMagRange;
+	float fMaxRatio = m_fAstRatio + 0.5f * fAstMagRange;
+	if(fMinRatio < 0.0f) fMinRatio = 0.0f;
+	if(fMaxRatio > fMaxAstRatio) fMaxRatio = fMaxAstRatio;
+	m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
+	   fMinRatio, fMaxRatio, 0.001, 1);
 	//---------------------------
 	if(fPhaseRange <= 0.5f)
 	{	mGetResults();
 		return;
 	}
 	//---------------------------
-        float fMinPhase = 0.0f;
+        float fMinPhase = m_fExtPhase - fPhaseRange;
         float fMaxPhase = m_fExtPhase + fPhaseRange;
 	fMinPhase = fmax(fMinPhase, m_afPhaseRange[0]);
 	fMaxPhase = fmin(fMaxPhase, m_afPhaseRange[1]);
 	m_pFindDefocus2D->RefineParam(m_gfCtfSpect,
-	   fMinPhase, fMaxPhase, 3, iIterations);
+	   fMinPhase, fMaxPhase, 1.0f, 3);
 	//---------------------------
         mGetResults();
 }

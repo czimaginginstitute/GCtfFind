@@ -16,6 +16,12 @@ public:
 	CCTFParam* GetCopy(void);
 	void ChangePixelSize(float fNewPixSize);
 	//---------------------------
+	float EstFirstZero
+	( float fDfMin,     // pixel
+	  float fDfMax,     // pixel
+	  float fExtPhase   // radian
+	);
+	//---------------------------
 	float m_fWavelength; // pixel
 	float m_fCs; // pixel
 	float m_fAmpContrast;
@@ -154,6 +160,10 @@ public:
 	( float* gfSpectrum,
 	  int* piSize
 	);
+	void ApplyRamp
+	( float* gfHalfSpect,
+	  int* piCmpSize
+	);
 	void GenFullSpect
 	( float* gfHalfSpect,
 	  int* piCmpSize,
@@ -276,11 +286,15 @@ class GCC2D
 public:
 	GCC2D(void);
 	~GCC2D(void);
-	void Setup
+	void SetFreqRange
 	(  float fFreqLow,  // relative freq [0, 0.5]
-	   float fFreqHigh, // relative freq [0, 0.5]
-	   float fBFactor
+	   float fFreqHigh  // relative freq [0, 0.5]
 	);
+	void SetFreqLow(float fFreqLow);   // [0, 0.5]
+	void SetFreqHigh(float fFreqHigh); // [0, 0.5]
+	//---------------------------
+	void SetBFactor(float fBFactor);
+	//---------------------------
 	void SetSize(int* piCmpSize); // half spectrum
 	float DoIt(float* gfCTF, float* gfSpectrum);
 private:
@@ -520,8 +534,8 @@ public:
 	( float* gfSpect,
 	  float fMinVal,
 	  float fMaxVal,
-	  int iParam,
-	  int iIterations
+	  float fStep,
+	  int iParam
 	);
 	void Refine
 	( float* gfSpect, 
@@ -538,12 +552,12 @@ public:
 	float GetScore(void);
 	float GetCtfRes(void);   // angstrom
 private:
-	float mCorrelate
-	( float fDfMean,
-	  float fAstRatio, // (fmax - fmin) / (fmax + fmin) 
-	  float fAstAngle, // degree
-	  float fExtPhase  // degree
+	float mCalcMetric
+	( float* pfDfRange, 
+	  float* pfPhaseRange, 
+	  float fBFactor
 	);
+	float mCorrelate(void);
 	//---------------------------
 	void mGetRange
 	( float fCentVal, float fRange,
@@ -557,13 +571,13 @@ private:
 	GCC2D* m_pGCC2D;
 	GCalcCTF2D m_aGCalcCtf2D;
 	CCTFParam* m_pCtfParam;
-	//---------------------------
-	float m_fDfMean;
-	float m_fAstRatio;
-	float m_fAstAngle;
-	float m_fExtPhase;
-	float m_fCtfRes;    // angstrom
-	float m_fMaxCC;
+	//-------------------------------------------
+	// 1) [DfMean, AstRatio, AstAngle, ExtPhase, 
+	//    CtfScore, CtfRes]
+	// 2) CtfRes in angstrom
+	//----------------------------------------
+	float m_afNewParam[6];
+	float m_afOldParam[6];
 };
 
 class CFindCtfBase

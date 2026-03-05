@@ -40,6 +40,20 @@ static __global__ void mGLogrithm
 	gfSpectrum[i] = logf(gfSpectrum[i]);
 }
 
+static __global__ void mGApplyRamp
+(	float* gfHalfSpect,
+	int iCmpY
+)	
+{	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	if(y >= iCmpY) return;
+	int i = y * gridDim.x + blockIdx.x;
+	//---------------------------
+	float fX = blockIdx.x * 0.5f / gridDim.x;
+	float fY = (y - 0.5f * iCmpY) / iCmpY;
+	float fW = powf((fX * fX + fY * fY), 0.25f) + 0.001f;
+	gfHalfSpect[i] *= fW;
+}
+
 //------------------------------------------------------------------------------
 // 1. DC of gfHalfSpect is already at (0, iCmpY / 2)
 // 2. DC of gfFullSpect will be at (iCmpX / 2, iCmpY / 2)
@@ -111,6 +125,15 @@ void GCalcSpectrum::Logrithm
 {	dim3 aBlockDim(1, 512);
 	dim3 aGridDim(piSize[0], piSize[1]/aBlockDim.y+1);
 	mGLogrithm<<<aGridDim, aBlockDim>>>(gfSpectrum, piSize[1]);
+}
+
+void GCalcSpectrum::ApplyRamp
+(	float* gfHalfSpect,
+	int* piCmpSize
+)
+{	dim3 aBlockDim(1, 512);
+        dim3 aGridDim(piCmpSize[0], piCmpSize[1]/aBlockDim.y+1);
+        mGApplyRamp<<<aGridDim, aBlockDim>>>(gfHalfSpect, piCmpSize[1]);
 }
 
 void GCalcSpectrum::GenFullSpect

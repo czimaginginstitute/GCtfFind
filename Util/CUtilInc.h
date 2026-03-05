@@ -10,6 +10,12 @@ class CSimpleFuncs
 {
 public:
 	static void CheckCudaError(const char* pcLocation);
+	//---------------------------
+	static float* GAllocFloat(int* piSize);
+	static float* GAllocFloat(int iSize);
+	//---------------------------
+	static cufftComplex* GAllocCmp(int* piSize);
+	static cufftComplex* GAllocCmp(int iSize);
 };	// CSimpleFunc
 
 class CParseArgs
@@ -41,6 +47,34 @@ public:
 	   float* gfSum,
 	   int* piImgSize
 	);
+};
+
+class GCalcMeanStd
+{
+public:
+	GCalcMeanStd(void);
+	~GCalcMeanStd(void);
+	float DoMean(float* gfImg, int* piImgSize, bool bPadded);
+	float DoStd(float* pfImg, int* piImgSize, bool bPadded);
+	//---------------------------
+	float m_fMean;
+	float m_fStd;
+};
+
+class GCalcCC2D
+{
+public:
+	GCalcCC2D(void);
+	~GCalcCC2D(void);
+	float DoIt
+	( float* gfImg1,
+	  float* gfImg2,
+	  int* piImgSize,
+	  bool bPadded
+	);
+	float m_fCC;
+	float m_afMeanStd1[2];
+	float m_afMeanStd2[2];
 };
 
 class GCalcMoment2D
@@ -159,6 +193,19 @@ private:
         int m_iFFTy;
 };
 
+class CPad2D
+{
+public:
+        
+	CPad2D(void);
+	~CPad2D(void);
+	void Pad(float* pfImg, int* piImgSize, float* pfPad);
+	void Unpad(float* pfPadImg, int* piPadSize, float* pfImg);
+	void GetPadSize(int* piImgSize, int* piPadSize);
+	void GetImgSize(int* piPadSize, int* piImgSize);
+	void GetCmpSize(int* piImgSize, int* piCmpSize);
+};
+
 class CRegSpline
 {
 public:
@@ -222,6 +269,7 @@ public:
         void GDoIt(float* gfImg, int* piSize);
         void GDoIt(unsigned char* gucImg, int* piSize);
         void DoIt(void* pvImg, int iMode, int* piSize);
+	void DoStack(float** ppfImgs, int* piImgSize, int iNumImgs);
 private:
         char m_acMrcFile[256];
 };	//CSaveTempMrc

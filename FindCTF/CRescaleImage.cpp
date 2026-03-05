@@ -62,6 +62,7 @@ void CRescaleImage::Setup(int* piRawSize, float fRawPixSize)
 	//---------------------------
 	m_aiPadSizeN[0] = (m_aiNewSize[0] / 2 + 1) * 2;
 	m_aiPadSizeN[1] = m_aiNewSize[1];
+	m_fPixSizeN = (m_fRawPixSize * m_aiRawSize[0]) / m_aiNewSize[0]; 
 	//---------------------------
 	bool bPad = true, bCmp = true;
 	if(m_fBinning > 1)

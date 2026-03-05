@@ -62,6 +62,7 @@ void CSpectrumImage::mEmbedCTF(void)
 	float fMinFreq = fPixelSize / m_afResRange[0];
 	float fMaxFreq = fPixelSize / m_afResRange[1];
 	float fGain = m_fStd * 1.5f;
+	fMaxFreq = 0.45f;
 	//--------------------------
 	GCalcCTF2D gCalcCtf2D;
 	CCTFParam* pCtfParam = m_pCTFTheory->GetParam(false);

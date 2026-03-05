@@ -33,6 +33,7 @@ CInput::CInput(void)
 	strcpy(m_acAmpContrastTag, "-AmpContrast");
 	strcpy(m_acPixelSizeTag, "-PixSize");
 	strcpy(m_acExtPhaseTag, "-ExtPhase");
+	strcpy(m_acAstRangeTag, "-AstRange");
 	strcpy(m_acTileSizeTag, "-TileSize");
 	strcpy(m_acTiltRangeTag, "-TiltRange");
 	strcpy(m_acLogSpectTag, "-LogSpect");
@@ -47,6 +48,7 @@ CInput::CInput(void)
 	m_fPixSize = 1.0f; // A
 	m_afExtPhase[0] = 0.0f;  // degree
 	m_afExtPhase[1] = 0.0f;  // not search when 0 or negative
+	m_fAstRange = 0.1f;      // max ratio of astigmatism
 	m_afTiltRange[0] = 0.0f; 
 	m_afTiltRange[1] = 0.0f;
 	m_iLogSpect = 0;
@@ -98,6 +100,9 @@ void CInput::ShowTags(void)
 	printf("%-15s\n"
 	  "  1. Extra phase shift and search range in degree.\n\n", 
 	   m_acExtPhaseTag);
+	printf("%-10s\n"
+	  "  1. Maximum ratio of astigmatism to be searched.\n\n",
+	   m_fAstRange);
 	printf("%-15s\n"
 	  "  1. Calculate logrithmic spectrum. It is not enabled "
 	  "     by default.\n\n", m_acLogSpectTag);
@@ -165,6 +170,10 @@ void CInput::Parse(int argc, char* argv[])
 	aParseArgs.GetVals(aiRange, m_afExtPhase);
 	if(m_afExtPhase[1] < 0) m_afExtPhase[1] = 0.0f;
 	//---------------------------
+	aParseArgs.FindVals(m_acAstRangeTag, aiRange);
+	if(aiRange[1] > 1) aiRange[1] = 1;
+	aParseArgs.GetVals(aiRange, &m_fAstRange);
+	//---------------------------
 	aParseArgs.FindVals(m_acTiltRangeTag, aiRange);
 	if(aiRange[1] > 2) aiRange[1] = 2;
 	aParseArgs.GetVals(aiRange, m_afTiltRange);
@@ -203,6 +212,7 @@ void CInput::mPrint(void)
 	printf("%-15s  %f\n", m_acCsTag, m_fCs);
 	printf("%-15s  %f\n", m_acAmpContrastTag, m_fAmpContrast);
 	printf("%-15s  %f\n", m_acPixelSizeTag, m_fPixSize);
+	printf("%-15s  %f\n", m_acAstRangeTag, m_fAstRange);
 	printf("%-15s  %f  %f\n", m_acExtPhaseTag, 
 	   m_afExtPhase[0], m_afExtPhase[1]);
 	printf("%-15s  %d\n", m_acTileSizeTag, m_iTileSize);
@@ -213,4 +223,17 @@ void CInput::mPrint(void)
 	printf("%-15s  %d\n", m_acGpuIDTag, m_iGpuID);
 	//--------------------------------------------
 	printf("\n");
+}
+
+void CInput::GetOutFile(const char* pcSuffix, char* pcOutFile)
+{
+	strcpy(pcOutFile, m_acOutMrcFile);
+	char* pcMrc = pcOutFile;
+	for(int i=0; i<100; i++)
+	{	if(pcMrc == 0L || strlen(pcMrc) <= 5) break;
+		else pcMrc = strcasestr(pcMrc, ".mrc");
+	}
+	//---------------------------
+	if(pcMrc == 0L) strcat(pcOutFile, pcSuffix);
+	else strcpy(pcMrc, pcSuffix);
 }

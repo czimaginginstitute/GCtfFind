@@ -29,15 +29,17 @@ static __global__ void mGCalc2D
 	int iOffset = 0, i = 0;
 	for(int y=blockIdx.x; y<iCmpY; y+=gridDim.x)
 	{	fY = (y - iCmpY * 0.5f) / iCmpY;
+		if((fY * fY) < fFreqLow2) continue;
 		iOffset = y * iCmpX;
 		for(int x=threadIdx.x; x<iCmpX; x+=blockDim.x)
 		{	fX = (0.5f * x) / (iCmpX - 1);
-			fX = fX * fX + fY * fY;
-			if(fX <fFreqLow2 || fX > fFreqHigh2) continue;
-			//--------------------------------------------
+			if((fX * fX) < fFreqLow2) continue;
+			float fR2 = fX * fX + fY * fY;
+			if(fR2 <fFreqLow2 || fR2 > fFreqHigh2) continue;
+			//------------------
 			i = iOffset + x;
 			float fC = (fabsf(gfCTF2D[i]) - 0.5f) 
-			   * expf(-fBFactor * fX);
+			   * expf(-fBFactor * fR2);
 			float fS = gfSpectrum[i];
 			fSumCC += (fC * fS);
 			fSumStd1 += (fC * fC);
@@ -102,6 +104,7 @@ GCC2D::GCC2D(void)
 {
 	m_fBFactor = 1.0f;
 	m_gfRes = 0L;
+	m_fBFactor = 25.0f;
 }
 
 GCC2D::~GCC2D(void)
@@ -109,13 +112,26 @@ GCC2D::~GCC2D(void)
 	if(m_gfRes != 0L) cudaFree(m_gfRes);
 }
 
-void GCC2D::Setup
+void GCC2D::SetFreqRange
 (	float fFreqLow,  // [0, 0.5]
-	float fFreqHigh, // [0, 0.5]
-	float fBFactor
+	float fFreqHigh // [0, 0.5]
 )
 {	m_fFreqLow = fFreqLow;
 	m_fFreqHigh = fFreqHigh;
+}
+
+void GCC2D::SetFreqLow(float fFreqLow)
+{
+	m_fFreqLow = fFreqLow;
+}
+
+void GCC2D::SetFreqHigh(float fFreqHigh)
+{
+	m_fFreqHigh = fFreqHigh;
+}
+
+void GCC2D::SetBFactor(float fBFactor)
+{
 	m_fBFactor = fBFactor;
 }
 

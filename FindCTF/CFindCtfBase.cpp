@@ -82,7 +82,7 @@ void CFindCtfBase::SetPhase(float fInitPhase, float fPhaseRange)
 	m_afPhaseRange[1] = fInitPhase + 0.5f * fPhaseRange;
 	//---------------------------
 	m_afPhaseRange[0] = fmaxf(m_afPhaseRange[0], 0.0f);
-	m_afPhaseRange[1] = fminf(m_afPhaseRange[1], 150.0f);
+	m_afPhaseRange[1] = fminf(m_afPhaseRange[1], 180.0f);
 }
 
 void CFindCtfBase::SetHalfSpect(float* pfCtfSpect)

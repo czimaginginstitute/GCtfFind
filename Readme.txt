@@ -111,3 +111,12 @@ Version 1.1.5 [02-07-2026]
 Bug Fix:
 Changes:
 1. Change the makefile to support Cuda 13
+
+Version 1.1.6 [02-17-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. CFindCtf2D::mDoIt: Refine astigmatism angle before the ratio. This is because
+   when the angle is not correct, the ratio refinement does not approach closer
+   to the correct value.
+2. Add -AstRange to let choose the search range for astigmatism ratio.
