@@ -48,9 +48,9 @@ static __global__ void mGApplyRamp
 	if(y >= iCmpY) return;
 	int i = y * gridDim.x + blockIdx.x;
 	//---------------------------
-	float fX = blockIdx.x * 0.5f / gridDim.x;
-	float fY = (y - 0.5f * iCmpY) / iCmpY;
-	float fW = powf((fX * fX + fY * fY), 0.25f) + 0.001f;
+	float fX = blockIdx.x / (gridDim.x - 1.0f);
+	float fY = (y - 0.5f * iCmpY) / iCmpY * 2.0f;
+	float fW = sqrtf(fX * fX + fY * fY);
 	gfHalfSpect[i] *= fW;
 }
 
@@ -136,6 +136,12 @@ void GCalcSpectrum::ApplyRamp
         mGApplyRamp<<<aGridDim, aBlockDim>>>(gfHalfSpect, piCmpSize[1]);
 }
 
+//--------------------------------------------------------------------
+// 1. Calculate the centered full spectrum from a half spectrum
+//    centered at (0, Ny/2).
+// 2. The full spectrum is padded (Nx + 2) to facilitate further
+//    Fourier transform for LPP.
+//--------------------------------------------------------------------
 void GCalcSpectrum::GenFullSpect
 (	float* gfHalfSpect, 
 	int* piCmpSize,

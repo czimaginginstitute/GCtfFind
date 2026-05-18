@@ -148,26 +148,50 @@ int GSpectralCC2D::DoIt
 {	dim3 aBlockDim(1, 512);
 	dim3 aGridDim(m_aiSpectSize[0], 1);
 	size_t tSmBytes = sizeof(float) * aBlockDim.y * 6;
-	//-----------------
+	//---------------------------
 	mGCalc2D<<<aGridDim, aBlockDim, tSmBytes>>>(gfCTF, gfSpect, 
 	   m_aiSpectSize[0], m_aiSpectSize[1], 10, m_gfCC);
 	cudaMemcpy(m_pfCC, m_gfCC, m_aiSpectSize[0] * sizeof(float),
 	   cudaMemcpyDefault);
-        //-----------------
-	int iMax = 1;
-	float fMax = (float)-1e30;
-	for(int i=1; i<m_aiSpectSize[0]; i++)
-	{	if(m_pfCC[i] <= fMax) continue;
-		fMax = m_pfCC[i];
-		iMax = i;
+	//---------------------------
+	int iShell0143 = mFindShell0143(m_pfCC, m_aiSpectSize[0]);
+	if(iShell0143 < 0) iShell0143 = 1;
+	return iShell0143;
+}
+
+int GSpectralCC2D::mFindShell0143(float* pfCC, int iSize)
+{	
+	float fMinCC = (float)1e20;
+	for(int i=1; i<iSize; i++)
+	{	if(pfCC[i] < fMinCC)
+		{	fMinCC = pfCC[i];
+		}
 	}
-	if(fMax < 0.143f) return iMax;
-	//-----------------
-	int iShell = iMax;
-	for(int i=iMax; i<m_aiSpectSize[0]; i++)
-	{	if(m_pfCC[i] < 0.143f) break;
-		iShell = i;
+	if(fMinCC > 0.143f) return -1;
+	//---------------------------
+	fMinCC = (0.143f + fMinCC) * 0.5f;
+	int iMaxShell = -1;
+	for(int i=iSize-1; i>1; i--)
+	{	if(pfCC[i] > 0.143f) continue;
+		else if(pfCC[i] < fMinCC) continue;
+		//-------------------
+		iMaxShell = i;
+		break;
 	}
-	return iShell;
+	if(iMaxShell == -1) return -1;
+	//---------------------------
+	int iShell0143 = -1;
+	int iCount = 0;
+	for(int i=iMaxShell; i>=1; i--)
+	{	if(pfCC[i] >= 0.143f)
+		{	iCount += 1;
+			if(iCount == 3) 
+			{	iShell0143 = i;
+				break;
+			}
+		}
+		else iCount = 0;
+	}
+	return iShell0143;
 }
 

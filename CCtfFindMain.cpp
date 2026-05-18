@@ -8,7 +8,6 @@
 
 using namespace GCTFFind;
 
-bool mCheckSame(void);
 bool mCheckSave(char* pcMrcFile);
 bool mCheckGPU(int iGpuID);
 
@@ -24,7 +23,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	else if(strstr(argv[1], "--version"))
-	{	printf("GCtfFind version 1.1.6, Mar 04, 2026\n");
+	{	printf("GCtfFind version 1.1.7, Mar 05, 2026\n");
 		return 0;
 	}
 	//---------------------------
@@ -32,10 +31,6 @@ int main(int argc, char* argv[])
 	utilTime.Measure();
 	//---------------------------
 	pInput->Parse(argc, argv);
-	bool bSame = mCheckSame();
-	if(bSame) return 1;
-	//---------------------------
-	//bool bSave = mCheckSave(pInput->m_acOutMrcFile);
 	bool bGpu = mCheckGPU(pInput->m_iGpuID);
 	if(!bGpu) return 1;
 	//---------------------------
@@ -45,20 +40,6 @@ int main(int argc, char* argv[])
 	float fSec = utilTime.GetElapsedSeconds();
 	printf("Total time:  %.3f (s)\n\n", fSec);
 	return 0;
-}
-
-bool mCheckSame(void)
-{
-	CInput* pInput = CInput::GetInstance();
-	int iSame1, iSame2;
-	iSame1 = strcasecmp(pInput->m_acInMrcFile, pInput->m_acOutMrcFile);
-	iSame2 = strcasecmp(pInput->m_acInMrcFile, pInput->m_acOutCtfFile);
-	if(iSame1 == 0 || iSame2 == 0)
-	{	fprintf(stderr, "Error: input and output files have the"
-		   "same name,\n\n");
-		return true;
-	}
-	return false;
 }
 
 bool mCheckSave(char* pcMrcFile)

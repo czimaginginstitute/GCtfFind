@@ -25,8 +25,7 @@ void CInput::DeleteInstance(void)
 CInput::CInput(void)
 {
 	strcpy(m_acInMrcTag, "-InMrc");
-	strcpy(m_acOutMrcTag, "-OutMrc");
-	strcpy(m_acOutCtfTag, "-OutCtf");
+	strcpy(m_acOutDirTag, "-OutDir");
 	strcpy(m_acAngFileTag, "-AngFile");
 	strcpy(m_acKvTag, "-kV");
 	strcpy(m_acCsTag, "-Cs");
@@ -55,8 +54,7 @@ CInput::CInput(void)
 	m_iTileSize = 512;
 	m_iGpuID = 0;
 	memset(m_acInMrcFile, 0, sizeof(m_acInMrcFile));
-	memset(m_acOutMrcFile, 0, sizeof(m_acOutMrcFile));
-	memset(m_acOutCtfFile, 0, sizeof(m_acOutCtfFile));
+	memset(m_acOutDir, 0, sizeof(m_acOutDir));
 	memset(m_acAngFile, 0, sizeof(m_acAngFile));
 	memset(m_acInSuffix, 0, sizeof(m_acInSuffix));
 	memset(m_acInSkips, 0, sizeof(m_acInSkips));
@@ -73,13 +71,10 @@ void CInput::ShowTags(void)
 	  "     frames. In the latter case, CTF will be estimated for \n"
 	  "     each fraome.\n\n", m_acInMrcTag);
 	printf("%-15s\n"
-	  "  1. Output MRC file that contains the averaged\n"
-	  "     amplitude spectrum.\n"
+	  "  1. Output directory that stores the averaged\n"
+	  "     amplitude spectrum and CTF results.\n"
 	  "  2. If the input is a stack of frames, the output will be\n"
-	  "     a stack of spectra, one for each frame.\n\n", m_acOutMrcTag);
-	printf("%-15s\n"
-	  "  1. Output text file containing the estimated ctf parameters\n"
-	  "     one line per tilt image.\n\n", m_acOutCtfTag);
+	  "     a stack of spectra, one for each frame.\n\n", m_acOutDirTag);
 	printf("%-15s\n"
 	  "  1. Input text file that contains a single column for tilt\n"
 	  "     angles. The order must match the images in the input\n"
@@ -134,11 +129,8 @@ void CInput::Parse(int argc, char* argv[])
 	aParseArgs.FindVals(m_acInMrcTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acInMrcFile);
 	//---------------------------
-	aParseArgs.FindVals(m_acOutMrcTag, aiRange);
-	aParseArgs.GetVal(aiRange[0], m_acOutMrcFile);
-	//---------------------------
-	aParseArgs.FindVals(m_acOutCtfTag, aiRange);
-	aParseArgs.GetVal(aiRange[0], m_acOutCtfFile);
+	aParseArgs.FindVals(m_acOutDirTag, aiRange);
+	aParseArgs.GetVal(aiRange[0], m_acOutDir);
 	//---------------------------
 	aParseArgs.FindVals(m_acInSuffixTag, aiRange);
 	aParseArgs.GetVal(aiRange[0], m_acInSuffix);
@@ -195,6 +187,11 @@ void CInput::Parse(int argc, char* argv[])
 	aParseArgs.FindVals(m_acGpuIDTag, aiRange);
 	if(aiRange[1] > 1) aiRange[1] = 1;
 	aParseArgs.GetVals(aiRange, &m_iGpuID);
+	//---------------------------
+	int iSize = strlen(m_acOutDir);
+	if(iSize == 0) strcpy(m_acOutDir, "./");
+	else if(m_acOutDir[iSize - 1] != '/') strcat(m_acOutDir, "/");
+	//---------------------------
 	mPrint();
 }
 
@@ -204,10 +201,9 @@ void CInput::mPrint(void)
 	printf("%-15s  %s\n", m_acInMrcTag, m_acInMrcFile);
 	printf("%-15s  %s\n", m_acInSuffixTag, m_acInSuffix);
 	printf("%-15s  %s\n", m_acInSkipsTag, m_acInSkips);
-	printf("%-15s  %s\n", m_acOutMrcTag, m_acOutMrcFile);
-	printf("%-15s  %s\n", m_acOutCtfTag, m_acOutCtfFile);
+	printf("%-15s  %s\n", m_acOutDirTag, m_acOutDir);
 	printf("%-15s  %s\n", m_acAngFileTag, m_acAngFile);
-	//-------------------------------------------------
+	//---------------------------
 	printf("%-15s  %f\n", m_acKvTag, m_fKv);
 	printf("%-15s  %f\n", m_acCsTag, m_fCs);
 	printf("%-15s  %f\n", m_acAmpContrastTag, m_fAmpContrast);
@@ -221,19 +217,27 @@ void CInput::mPrint(void)
 	printf("%-15s  %d\n", m_acLogSpectTag, m_iLogSpect);
 	printf("%-15s  %d\n", m_acSerialTag, m_iSerial);
 	printf("%-15s  %d\n", m_acGpuIDTag, m_iGpuID);
-	//--------------------------------------------
+	//---------------------------
 	printf("\n");
 }
 
-void CInput::GetOutFile(const char* pcSuffix, char* pcOutFile)
-{
-	strcpy(pcOutFile, m_acOutMrcFile);
-	char* pcMrc = pcOutFile;
-	for(int i=0; i<100; i++)
-	{	if(pcMrc == 0L || strlen(pcMrc) <= 5) break;
-		else pcMrc = strcasestr(pcMrc, ".mrc");
-	}
+void CInput::GetOutFile
+(	const char* pcMrcFile,
+	const char* pcSuffix, 
+	char* pcOutFile
+)
+{	char acBuf[256] = {'\0'};
+	const char* pcSlash = strrchr(pcMrcFile, '/');
+	if(pcSlash == 0L) strcpy(acBuf, pcMrcFile);
+	else strcpy(acBuf, &pcSlash[1]);
 	//---------------------------
-	if(pcMrc == 0L) strcat(pcOutFile, pcSuffix);
-	else strcpy(pcMrc, pcSuffix);
+	char* pcMrcToken = strstr(acBuf, ".mrc");
+	if(pcMrcToken != 0L) strcpy(pcMrcToken, "");
+	//---------------------------
+	strcpy(pcOutFile, m_acOutDir);
+	strcat(pcOutFile, acBuf);
+	//---------------------------
+	if(pcSuffix != 0L && strlen(pcSuffix) > 0) 
+		strcat(pcOutFile, pcSuffix);
+
 }

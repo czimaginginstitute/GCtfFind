@@ -37,27 +37,43 @@ void CSaveCtfResults::SaveCTF(void)
 	CCtfPackage* pPackage = 0L;
 	CInput* pInput = CInput::GetInstance();
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
-	//-------------------------------------------------------
-	if(strlen(pInput->m_acOutCtfFile) == 0) return;
-	FILE* pFile = fopen(pInput->m_acOutCtfFile, "w");
+	//---------------------------
+	char acCtfFile[512] = {'\0'};
+	pInput->GetOutFile("CTF", ".txt", acCtfFile);
+	FILE* pFile = fopen(acCtfFile, "w");
 	if(pFile == 0L)
-	{	printf("CTF file: %s\n", pInput->m_acOutCtfFile);
+	{	printf("CTF file: %s\n", acCtfFile);
 		printf("   cannot be opened, CTF results not saved.\n\n");
 	}
 	if(pFile == 0L) return;
-	//---------------------
-	fprintf(pFile, "# Idx   tilt    dfMin(A)   dfMax(A)   azimuth(d) "
-	   "phase(d)  score    res(A)    fileName\n");
-	int iNumPackages = pInputFolder->GetNumPackages();	
+	//---------------------------
+	fprintf(pFile, "# fileName  tilt  dfMin(A)  dfMax(A) "
+	   "azimuth(d) phase(d)  score  res(A)  pixSize(A) "  
+	   "lppPitch1  lppAngle1  lppPitch2  lppAngle2\n");
+	//---------------------------
+	char acMrcFile[256] = {'\0'};
+	int iNumPackages = pInputFolder->GetNumPackages();
+	//---------------------------
 	for(int i=0; i<iNumPackages; i++)
 	{	pPackage = pInputFolder->GetPackage(i, !bClean);
-		fprintf(pFile, "%4d  %6.2f %10.2f %10.2f %10.2f " 
-		   "%8.2f %10.4f  %6.2f  %s\n", pPackage->m_iImgIdx,
-		   pPackage->m_fTilt,  pPackage->m_fDfMin,
-		   pPackage->m_fDfMax, pPackage->m_fAzimuth,
-		   pPackage->m_fExtPhase, pPackage->m_fScore,
+		pPackage->GetMrcFile(acMrcFile);
+		//-------------------
+		fprintf(pFile, "%s %6.2f %9.1f %9.1f "
+		   "%7.1f %7.1f %8.4f %6.2f %6.2f "
+		   "%9.2e %7.1f %9.2e %7.1f\n", 
+		   acMrcFile,
+		   pPackage->m_fTilt,  
+		   pPackage->m_fDfMin,
+		   pPackage->m_fDfMax, 
+		   pPackage->m_fAzimuth,
+		   pPackage->m_fExtPhase, 
+		   pPackage->m_fScore,
 		   pPackage->m_fCtfRes,
-		   pPackage->m_acMrcFileName);
+		   pInput->m_fPixSize,
+		   pPackage->m_afLpp1[0],
+		   pPackage->m_afLpp1[1],
+		   pPackage->m_afLpp2[0],
+		   pPackage->m_afLpp2[1]);
 	}
 	fclose(pFile);
 }
@@ -68,20 +84,15 @@ void CSaveCtfResults::SaveImod(void)
 	CCtfPackage* pPackage = 0L;
 	CInput* pInput = CInput::GetInstance();
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
-	//-------------------------------------------------------
-	if(strlen(pInput->m_acOutCtfFile) == 0) return;
+	//---------------------------
 	if(!pInputFolder->IsTomo()) return;
 	int iNumPackages = pInputFolder->GetNumPackages();
-	//------------------------------------------------
-	char acFileName[256];
-	strcpy(acFileName, pInput->m_acOutCtfFile);
-	char* pcLastDot = strrchr(acFileName, '.');
-	if(pcLastDot == 0L) strcat(acFileName, "_Imod.txt");
-	else strcpy(pcLastDot, "_Imod.txt");
-	//----------------------------------
+	//---------------------------
+	char acFileName[512] = {'\0'};
+	pInput->GetOutFile("CTF", "_Imod.txt", acFileName);
 	FILE* pFile = fopen(acFileName, "w");
 	if(pFile == 0L) return;
-	//---------------------
+	//---------------------------
 	pPackage = pInputFolder->GetPackage(0, !bClean);
 	if(pPackage->m_fExtPhase == 0) 
 	{	fprintf(pFile, "1  0  0.0  0.0  0.0  3\n");

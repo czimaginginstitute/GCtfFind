@@ -55,7 +55,8 @@ void CFindCtf2D::Do2D(void)
            m_fAstAng, m_fExtPhase);
 	//---------------------------
 	float afDfRange[] = {m_fDfMax - 3000.0f, m_fDfMax + 3000.0f};
-	afDfRange[0] = fmax(afDfRange[0], 2000.0f);
+	//afDfRange[0] = fmax(afDfRange[0], 2000.0f);
+	afDfRange[0] = fmax(afDfRange[0], -3000.0f);
 	//---------------------------
 	float afPhaseRange[] = {m_afPhaseRange[0], m_afPhaseRange[1]};
 	m_pFindDefocus2D->DoIt(m_gfCtfSpect, afDfRange, afPhaseRange);

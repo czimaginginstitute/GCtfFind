@@ -81,7 +81,7 @@ void CFindSeriesCtfs::DoIt(void)
 		strcpy(acLog, acBuf);
 		//--------------------------
 		utilTime.Measure();
-		//mTestLpp(m_iNumDone);
+		mTestLpp(m_iNumDone);
 		mRescaleImage(m_iNumDone);
 		mSetupFindCtf();
 		//-----------------------------------------------
@@ -110,15 +110,13 @@ void CFindSeriesCtfs::DoIt(void)
 void CFindSeriesCtfs::mTestLpp(int iPackage)
 {
 	CProcessLpp* pProcessLpp = CProcessLpp::GetInstance();
-	if(iPackage == 0) 
-	{	pProcessLpp->Setup(m_pPackage->m_aiImgSize, 10.0f);
-	}
-	pProcessLpp->DoIt(m_pPackage->m_pfImage);
+	CInput* pInput = CInput::GetInstance();
+	pProcessLpp->Setup(m_pPackage->m_aiImgSize,
+	   pInput->m_fPixSize);
+	pProcessLpp->DoIt(m_pPackage);
 	//---------------------------
 	int iLast = m_iNumPackages - 1;
 	if(iPackage < iLast) return;
-	//---------------------------
-	pProcessLpp->PostProcess();
 }
 
 void CFindSeriesCtfs::mRescaleImage(int iPackage)
@@ -151,20 +149,13 @@ void CFindSeriesCtfs::mProcessPackage(int iPackage)
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
 	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
 	//---------------------------
-	/*if(iPackage == 0 || !pInputFolder->IsTomo()) mProcessFull();
-	if(iPackage == 0) 
-	{	mProcessFull();
-	}
-	else 
-	{	mProcessRefine();
-		if(m_pPackage->m_fScore < 0.1) mProcessFull();
-	}*/
 	mProcessFull();
 	//--------------------
 	mDisplay();
 	//---------------------------
 	bool bHalf = true;
-	m_pPackage->m_pfFullSpect = pFindCtf2D->GenFullSpectrum();
+	pFindCtf2D->GenFullSpectrum();
+	m_pPackage->m_pfFullSpect = pFindCtf2D->EmbedCTF();
 	pFindCtf2D->GetSpectSize(m_pPackage->m_aiSpectSize, !bHalf);
 }
 
@@ -233,19 +224,19 @@ void CFindSeriesCtfs::mGetResults(void)
 void CFindSeriesCtfs::mDisplay(void)
 {
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
-	//-------------------------------------------------------
+	//---------------------------
 	char acMainFile[256] = {'\0'};
         pInputFolder->GetFileName(m_pPackage->m_iImgIdx, acMainFile);
-	//-----------------------------------------------------------
+	//---------------------------
 	char acInfo[512] = {'\0'};
         sprintf(acInfo, "%s: %5d prcoessed, %5d left\n", acMainFile,
 	   m_iNumDone + 1, m_iNumPackages - 1 - m_iNumDone);
-	//--------------------------------------------------
+	//---------------------------
 	char acBuf1[128] = {'\0'};
 	sprintf(acBuf1, "%s", "   Index  dfmin     dfmax    "
 	   "azimuth  phase   Res(A)  score\n");
 	strcat(acInfo, acBuf1);
-	//---------------------
+	//---------------------------
 	char acBuf2[128] = {'\0'};
 	sprintf(acBuf2, "   %4d  %8.2f  %8.2f  %6.2f %6.2f  %6.2f %9.5f\n",
 	   m_pPackage->m_iImgIdx + 1, m_pPackage->m_fDfMin,
@@ -253,6 +244,10 @@ void CFindSeriesCtfs::mDisplay(void)
 	   m_pPackage->m_fExtPhase,   m_pPackage->m_fCtfRes,
 	   m_pPackage->m_fScore);
 	strcat(acInfo, acBuf2);
-	//---------------------
-	printf("%s\n", acInfo);
+	printf("%s", acInfo);
+	//---------------------------
+	printf("xLPP fringes: ");
+	printf("%.3e  %7.1f  %.3e  %7.1f\n\n",
+	   m_pPackage->m_afLpp1[0], m_pPackage->m_afLpp1[1],
+	   m_pPackage->m_afLpp2[0], m_pPackage->m_afLpp2[1]);
 }

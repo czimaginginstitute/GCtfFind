@@ -41,7 +41,6 @@ private:
 	CAsyncSaveImages(void);
 	void mSaveTomo(void);
 	void mSaveMultiple(void);
-	void mEmbedSerial(int iPackage, char* pcOutMrcFile);
 	CCtfPackage* mGetPackage(void);
 	std::queue<CCtfPackage*> m_aSaveQueue;
 	int m_iNumPackages;

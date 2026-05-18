@@ -7,10 +7,17 @@ PRJINC = $(PRJHOME)/Include
 PRJLIB = $(PRJHOME)/Lib
 #------------------------------
 CUSRCS = ./Util/GAddImages.cu \
+	 ./Util/GCalcMeanStd.cu \
+	 ./Util/GCalcCC2D.cu \
 	 ./Util/GCalcMoment2D.cu \
 	 ./Util/GNormalize2D.cu \
 	 ./Util/GThreshold2D.cu \
 	 ./Util/GFtResize2D.cu \
+	 ./Util/GRoundEdge2D.cu \
+	 ./Lpp/GCalcPhase2D.cu \
+	 ./Lpp/GFindTwinPeaks.cu \
+	 ./Lpp/GNormAmpSpectrum.cu \
+	 ./Lpp/GGenAmpProjs.cu \
 	 ./FindCTF/GCalcCTF1D.cu \
 	 ./FindCTF/GCalcCTF2D.cu \
 	 ./FindCTF/GCalcSpectrum.cu \
@@ -29,6 +36,7 @@ CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
 	./Util/CSimpleFuncs.cpp \
+	./Util/CPad2D.cpp \
 	./Util/CParseArgs.cpp \
 	./Util/CRegSpline.cpp \
 	./Util/CRegSpline2.cpp \
@@ -44,12 +52,14 @@ SRCS = ./CInput.cpp \
 	./FindCTF/CCTFTheory.cpp \
 	./FindCTF/CRescaleImage.cpp \
 	./FindCTF/CGenAvgSpectrum.cpp \
-	./FindCTF/CSpectrumImage.cpp \
+	./FindCTF/CEmbedCTF.cpp \
 	./FindCTF/CFindDefocus1D.cpp \
 	./FindCTF/CFindDefocus2D.cpp \
 	./FindCTF/CFindCtf1D.cpp \
 	./FindCTF/CFindCtf2D.cpp \
 	./FindCTF/CFindCtfBase.cpp \
+	./Lpp/CCalcAmpSpect.cpp \
+	./Lpp/CProcessLpp.cpp \
 	./CCtfPackage.cpp \
 	./CInputFolder.cpp \
 	./CSaveCtfResults.cpp \
@@ -65,14 +75,11 @@ CC = g++
 CFLAG = -c -g -pthread -m64
 NVCC = $(CUDAHOME)/bin/nvcc -std=c++11
 CUFLAG = -Xptxas -dlcm=ca -O2 \
-	-gencode arch=compute_52,code=sm_52 \
-	-gencode arch=compute_53,code=sm_53 \
-	-gencode arch=compute_60,code=sm_60 \
-	-gencode arch=compute_61,code=sm_61 \
 	-gencode arch=compute_70,code=sm_70 \
 	-gencode arch=compute_75,code=sm_75 \
-	-gencode arch=compute_75,code=sm_80 \
-	-gencode arch=compute_86,code=sm_86
+	-gencode arch=compute_80,code=sm_80 \
+	-gencode arch=compute_86,code=sm_86 \
+	-gencode arch=compute_89,code=sm_89
 #-----------------------------------------
 cuda: $(CUCPPS)
 

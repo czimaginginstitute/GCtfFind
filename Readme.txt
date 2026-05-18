@@ -120,3 +120,13 @@ Changes:
    when the angle is not correct, the ratio refinement does not approach closer
    to the correct value.
 2. Add -AstRange to let choose the search range for astigmatism ratio.
+
+Version 1.1.7 [05-18-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. GSpectralCC2D.cu: Searching the shell from right to find the shell that
+   hits 0.143. In the meantime, the implementation checks if the CC goes up
+   after that hit.
+2. Added Lpp folder where the xLpp handling code stays.
+3. Added makefile12 for Cuda 12. Removed makefile and makefile10

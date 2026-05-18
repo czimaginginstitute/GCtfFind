@@ -18,8 +18,9 @@ CCtfPackage::CCtfPackage(void)
 	m_fExtPhase = 0.0f;
 	m_fScore = 0.0f;
 	m_fCtfRes = 0.0f;
+	memset(m_afLpp1, 0, sizeof(m_afLpp1));
+	memset(m_afLpp2, 0, sizeof(m_afLpp2));
 	m_pfImage = 0L;
-	m_pfHalfSpect = 0L;
 	m_pfFullSpect = 0L;
 }
 
@@ -40,13 +41,15 @@ void CCtfPackage::Clean(void)
 
 void CCtfPackage::CleanSpects(void)
 {
-	if(m_pfHalfSpect != 0L)
-	{	delete[] m_pfHalfSpect;
-		m_pfHalfSpect = 0L;
-	}
 	if(m_pfFullSpect != 0L)
 	{	delete[] m_pfFullSpect;
 		m_pfFullSpect = 0L;
 	}
 }
 
+void CCtfPackage::GetMrcFile(char* pcMrcFile)
+{
+	char* pcSlash = strrchr(m_acMrcFileName, '/');
+	if(pcSlash == 0L) strcpy(pcMrcFile, m_acMrcFileName);
+	else strcpy(pcMrcFile, &pcSlash[1]);
+}

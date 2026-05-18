@@ -120,19 +120,35 @@ void CFindCtfBase::GenHalfSpectrum(float* gfPadImg)
 	mLowpass();
 }
 
-float* CFindCtfBase::GenFullSpectrum(void)
+void CFindCtfBase::GenFullSpectrum(void)
 {
 	float fAstRad = m_fAstAng * 0.017453f;
         m_pCtfTheory->SetDefocus(m_fDfMin, m_fDfMax, fAstRad);
 	m_pCtfTheory->SetExtPhase(m_fExtPhase, true);
-	//-------------------------------------------
-	CSpectrumImage spectrumImage;
-	spectrumImage.DoIt(m_gfCtfSpect, m_gfRawSpect, m_aiCmpSize,
-	   m_pCtfTheory, m_afResRange, m_gfFullSpect);
-	//--------------------------------------------
-	int iPixels = (m_aiCmpSize[0] - 1) * 2 * m_aiCmpSize[1];
-	float* pfFullSpect = new float[iPixels];
-	cudaMemcpy(pfFullSpect, m_gfFullSpect, iPixels * sizeof(float),
+	//---------------------------
+	GCalcSpectrum calcSpect;
+	bool bFullPadded = true;
+	calcSpect.GenFullSpect(m_gfCtfSpect, m_aiCmpSize,
+	   m_gfFullSpect, !bFullPadded);
+}
+
+float* CFindCtfBase::EmbedCTF(void)
+{	
+	float fAstRad = m_fAstAng * 0.017453f;
+        m_pCtfTheory->SetDefocus(m_fDfMin, m_fDfMax, fAstRad);
+        m_pCtfTheory->SetExtPhase(m_fExtPhase, true);
+	//---------------------------
+	int aiFullSize[] = {(m_aiCmpSize[0] - 1) * 2, m_aiCmpSize[1]};
+	float* gfFullSpect = CSimpleFuncs::GAllocFloat(aiFullSize);
+	int iFullSize = aiFullSize[0] * aiFullSize[1];
+	cudaMemcpy(gfFullSpect, m_gfFullSpect, sizeof(float) 
+	   * iFullSize, cudaMemcpyDefault);
+	//---------------------------
+	CEmbedCTF embedCTF;
+	embedCTF.DoIt(gfFullSpect, aiFullSize, m_pCtfTheory, m_afResRange);
+	//---------------------------
+	float* pfFullSpect = new float[iFullSize];
+	cudaMemcpy(pfFullSpect, gfFullSpect, iFullSize * sizeof(float),
 	   cudaMemcpyDefault);
 	return pfFullSpect;
 }

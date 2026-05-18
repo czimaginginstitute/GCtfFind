@@ -15,10 +15,14 @@ public:
 	~CInput(void);
 	void ShowTags(void);
 	void Parse(int argc, char* argv[]);
-	void GetOutFile(const char* pcSuffix, char* acOutFile);
+	void GetOutFile
+	( const char* pcMrcFile, 
+	  const char* pcSuffix,
+	  char* acOutFile
+	);
+	//---------------------------
 	char m_acInMrcFile[256];
-	char m_acOutMrcFile[256];
-	char m_acOutCtfFile[256];
+	char m_acOutDir[256];
 	char m_acAngFile[256];
 	char m_acInSuffix[256];
 	char m_acInSkips[256];
@@ -33,14 +37,13 @@ public:
 	int m_iLogSpect;
 	int m_iGpuID;
 	int m_iSerial;
-
 private:
 	CInput(void);
 	void mPrint(void);
 	int m_argc;
 	char** m_argv;
 	char m_acInMrcTag[32];
-	char m_acOutMrcTag[32];
+	char m_acOutDirTag[32];
 	char m_acOutCtfTag[32];
 	char m_acAngFileTag[32];
 	char m_acTiltRangeTag[32];
@@ -66,20 +69,24 @@ public:
 	~CCtfPackage(void);
 	void Clean(void);
 	void CleanSpects(void);
-	char m_acMrcFileName[256];
+	void GetMrcFile(char* pcMrcFile);
+	//---------------------------
+	char m_acMrcFileName[512];
 	int m_iImgIdx; 
 	float m_fTilt;
 	float* m_pfImage;
 	int m_aiImgSize[2];
-	float* m_pfHalfSpect;
 	float* m_pfFullSpect;
 	int m_aiSpectSize[2];
+	//---------------------------
 	float m_fDfMin;
 	float m_fDfMax;
 	float m_fAzimuth;
 	float m_fExtPhase;
 	float m_fScore;
 	float m_fCtfRes;
+	float m_afLpp1[2];
+	float m_afLpp2[2];
 };
 
 class CInputFolder

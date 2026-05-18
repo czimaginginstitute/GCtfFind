@@ -52,3 +52,24 @@ cufftComplex* CSimpleFuncs::GAllocCmp(int iSize)
 	cudaMalloc(&gcmpBuf, tBytes);
 	return gcmpBuf;
 }
+
+void CSimpleFuncs::ReplaceSuffix
+(	const char* pcFileName,
+	const char* pcOldSuffix,
+	const char* pcNewSuffix,
+	char* pcNewFileName
+)
+{	if(pcFileName == 0L || pcOldSuffix == 0L) return;
+	int ifnSize = strlen(pcFileName);
+	int iosSize = strlen(pcOldSuffix);
+	if(ifnSize <= iosSize) return;
+	//---------------------------
+	strcpy(pcNewFileName, pcFileName);
+	char* pcToken = &pcNewFileName[ifnSize - iosSize];
+	strcpy(pcToken, "");
+	//---------------------------
+	if(pcNewSuffix == 0L || strlen(pcNewSuffix) == 0) return;
+	else strcpy(pcToken, pcNewSuffix);
+}
+
+

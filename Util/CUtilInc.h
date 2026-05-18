@@ -16,6 +16,13 @@ public:
 	//---------------------------
 	static cufftComplex* GAllocCmp(int* piSize);
 	static cufftComplex* GAllocCmp(int iSize);
+	//---------------------------
+	static void ReplaceSuffix
+	( const char* pcFileName,
+	  const char* pcOldSuffix,
+	  const char* pcNewSuffix,
+	  char* pcNewFileName
+	);
 };	// CSimpleFunc
 
 class CParseArgs
@@ -59,6 +66,17 @@ public:
 	//---------------------------
 	float m_fMean;
 	float m_fStd;
+};
+
+class GRoundEdge2D
+{
+public:
+	GRoundEdge2D(void);
+	~GRoundEdge2D(void);
+	void SetMask(float fSizeX, float fSizeY);
+	void DoIt(float* gfImg, int* piSize, bool bPadded, float fBFactor);
+private:
+	float m_afMaskSize[2];
 };
 
 class GCalcCC2D

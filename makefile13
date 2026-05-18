@@ -13,8 +13,11 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./Util/GNormalize2D.cu \
 	 ./Util/GThreshold2D.cu \
 	 ./Util/GFtResize2D.cu \
+	 ./Util/GRoundEdge2D.cu \
 	 ./Lpp/GCalcPhase2D.cu \
 	 ./Lpp/GFindTwinPeaks.cu \
+	 ./Lpp/GNormAmpSpectrum.cu \
+	 ./Lpp/GGenAmpProjs.cu \
 	 ./FindCTF/GCalcCTF1D.cu \
 	 ./FindCTF/GCalcCTF2D.cu \
 	 ./FindCTF/GCalcSpectrum.cu \
@@ -49,12 +52,13 @@ SRCS = ./CInput.cpp \
 	./FindCTF/CCTFTheory.cpp \
 	./FindCTF/CRescaleImage.cpp \
 	./FindCTF/CGenAvgSpectrum.cpp \
-	./FindCTF/CSpectrumImage.cpp \
+	./FindCTF/CEmbedCTF.cpp \
 	./FindCTF/CFindDefocus1D.cpp \
 	./FindCTF/CFindDefocus2D.cpp \
 	./FindCTF/CFindCtf1D.cpp \
 	./FindCTF/CFindCtf2D.cpp \
 	./FindCTF/CFindCtfBase.cpp \
+	./Lpp/CCalcAmpSpect.cpp \
 	./Lpp/CProcessLpp.cpp \
 	./CCtfPackage.cpp \
 	./CInputFolder.cpp \

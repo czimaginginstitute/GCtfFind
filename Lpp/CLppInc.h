@@ -24,28 +24,104 @@ public:
 	);
 };
 
+class GNormAmpSpectrum
+{
+public:
+	GNormAmpSpectrum(void);
+	~GNormAmpSpectrum(void);
+	void Clean(void);
+	void SetCmpSize(int* piCmpSize);
+	void DoIt(float* gfHalfSpect);
+	//---------------------------
+	int m_aiCmpSize[2];
+private:
+	void mApplyRamp(float* gfHalfSpect);
+	void mNorm(float* gfHalfSpect);
+};
+
 class GFindTwinPeaks
 {
 public:
 	GFindTwinPeaks(void);
 	~GFindTwinPeaks(void);
 	void Clean(void);
-	void SetSize(int* piCmpSize);
-	void DoIt(cufftComplex* gCmp);
+	void SetPadSize(int* piPadSize);
+	void SetPixSize(float fPixSize);
+	void DoIt(float* gfPadSpect);
+	float m_afPeak1[2];
+	float m_afPeak2[2];
 private:
-	void mCalcPeaks(cufftComplex* gCmp);
-	void mFindTwinPeaks(cufftComplex* gCmp);
+	void mCalcRotSum(void);
+	void mFindAvgPeak(void);
+	void mFindTwinPeaks(void);
+	void mLocalSearch
+	( int iCentX,
+	  int iCentY,
+	  float fRadius,
+	  int* piPeakLoc
+	);
 	//---------------------------
-	float* m_gfPeaks;
-	int* m_giLocs;
+	CCufft2D* m_pCufft2D;
+	float* m_gfHalfSpect;
+	float* m_gfRotSum;
+	float* m_gfPadSpect;
+	//---------------------------
+	int m_aiPadSize[2];
 	int m_aiCmpSize[2];
-	int m_aiHalfSize[2];
-	//---------------------------
-	int m_iPeak1;
-	int m_iPeak2;
-	cufftComplex m_cmpPeak1;
-	cufftComplex m_cmpPeak2;
+	float m_fPixSize;
+	int m_aiAvgPeak[2]; // from 90-degree rotation average
 };
+
+class GGenAmpProjs
+{
+public:
+	GGenAmpProjs(void);
+	~GGenAmpProjs(void);
+	void Clean(void);
+	void SetSpectSize(int* piSpectSize);
+	void SetRotAngle(float fRotDegree);
+	void DoIt(float* gfFullSpect);
+	void SaveProjs(const char* pcImgName);
+	//---------------------------
+	int m_aiSpectSize[2];
+private:
+	void mSaveProj(float* gfProj, int iSize, char* pcFileName);
+	//---------------------------
+	float* m_gfProjX;
+	float* m_gfProjY;
+	float m_fCos;
+	float m_fSin;
+	int m_iFringeWidth;
+};
+
+class CCalcAmpSpect
+{
+public:
+	CCalcAmpSpect(void);
+	~CCalcAmpSpect(void);
+	void Clean(void);
+	void Setup(int* piImgSize, float fPixSize);
+	void DoIt(float* pfImage);
+	//---------------------------
+	int m_aiPadSize[2];
+	float* m_gfPadSpect;
+private:
+	void mPadImage(float* pfImage);
+	void mNormImg(void);
+	void mRoundEdge(void);
+	void mForwardFFT(void);
+	void mCalcSpect(void);
+	//---------------------------
+	float* m_gfPadImg;
+	CCufft2D* m_pCufft2D;
+	//---------------------------
+	int m_aiRawSize[2];
+	float m_fPixSize;
+	//---------------------------
+	int m_aiImgSize[2];
+	int m_aiCmpSize[2];
+};
+	
 
 class CProcessLpp
 {
@@ -56,57 +132,18 @@ public:
 	~CProcessLpp(void);
 	void Clean(void);
 	void Setup(int* piImgSize, float fBinning);
-	void DoIt(float* pfImage);
-	//---------------------------
-	void PostProcess(void);
-	void SaveSpectrums(void);
+	void DoIt(void* pCtfPackage);
 private:
 	CProcessLpp(void);
-	void mPadImage(float* pfImage);
-	void mNormImg(float* gfImg, int* piImgSize, bool bPadded);
-	void mRoundEdge(float* gfImg, int* piImgSize, bool bPadded);
-	void mForwardFFT(void);
-	cufftComplex* mFtBinning(void);
-	void mCalcAmpPhase(cufftComplex* gCmp);
-	void mNormAmp
-	( float* gfImg,
-	  int* piImgSize,
-	  bool bPadded
-	);
-	void mQueueImg
-	( float* gfPadImg,
-	  int* piPadSize,
-	  bool bAmp
-	);
-	void mSaveImg
-	( float* gfPadImg, 
-	  int* piPadSize, 
-	  const char* pcSuffix
-	);
-	void mSaveStack
-	( float** ppfImgs,
-	  int* piImgSize,
-	  int iNumImgs,
-	  const char* pcSuffix
-	);
+	void mLowpass(void);
+	void mSaveFullSpect(void);
 	//---------------------------
-	int m_aiRawSize[2];
-	int m_aiImgSize[2];
-	int m_aiImgPadSize[2];
-	int m_aiBinSize[2];
-	int m_aiBinPadSize[2];
-	float* m_gfBuf;
+	CCalcAmpSpect* m_pCalcAmpSpect;
+	GFindTwinPeaks* m_pFindTwinPeaks;
 	//---------------------------
-	std::queue<float*> m_ampQueue;
-	std::queue<float*> m_phiQueue;
+	void* m_pvCtfPackage;
+	float m_fPixSize;
 	//---------------------------
-	float** m_ppfAmps;
-	float** m_ppfPhis;
-	int m_iNumAmps;
-	void mCleanAmps(void);
-	void mCorrelateAmps(void);
-	//---------------------------
-
 	static CProcessLpp* m_pInstance;
 };
 

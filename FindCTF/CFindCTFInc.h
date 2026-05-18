@@ -180,6 +180,8 @@ public:
 	void SetSize(int* piSpectSize);
 	int DoIt(float* gfCTF, float* gfSpect);
 private:
+	int mFindShell0143(float* pfCC, int iSize);
+	//---------------------------
 	int m_aiSpectSize[2];
 	float* m_gfCC;
 	float* m_pfCC;
@@ -429,31 +431,18 @@ private:
 	float m_fPixelSize;
 };
 
-class CSpectrumImage
+class CEmbedCTF
 {
 public:
-	CSpectrumImage(void);
-	~CSpectrumImage(void);
+	CEmbedCTF(void);
+	~CEmbedCTF(void);
 	void DoIt
-	( float* gfHalfSpect,
-	  float* gfCtfBuf,
-	  int* piCmpSize,
+	( float* gfFullSpect,
+	  int* piSpectSize,
 	  CCTFTheory* pCTFTheory,
-	  float* pfResRange,
-	  float* gfFullSpect
+	  float* pfResRange
 	);
-private:
-	void mGenFullSpectrum(void);
-	void mEmbedCTF(void);
-	float* m_gfHalfSpect;
-	float* m_gfCtfBuf;
-	float* m_gfFullSpect;
-	CCTFTheory* m_pCTFTheory;
-	int m_aiCmpSize[2];
-	float m_afResRange[2];
-	float m_fMean;
-	float m_fStd;     
-};	// CSpectrumImage
+};
 
 class CRescaleImage
 {
@@ -593,7 +582,8 @@ public:
 	float* GetHalfSpect(bool bRaw, bool bToHost);
 	void GetSpectSize(int* piSize, bool bHalf);
 	void GenHalfSpectrum(float* pfImage);
-	float* GenFullSpectrum(void);  // clean by caller
+	void GenFullSpectrum(void);  
+	float* EmbedCTF(void); // clean by caller
 	void SaveSpectrum(char* pcMrcFile);
 	void ShowResult(void);
 	//---------------------------
