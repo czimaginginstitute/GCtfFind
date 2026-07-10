@@ -1,7 +1,7 @@
 #include "CLppInc.h"
 #include "../CMainInc.h"
 #include "../FindCTF/CFindCTFInc.h"
-#include <CuUtilFFT/GFFT2D.h>
+#include "../Util/CUtilInc.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
@@ -142,7 +142,8 @@ static void gSaveMrc(float* gfImg, int* piSize, const char* pcSuffix)
         pInput->GetOutFile("Test", pcSuffix, acOutMrc);
         //---------------------------
         CSaveTempMrc saveMrc;
-        saveMrc.SetFile(acOutMrc, "");
+	char acExt[16] = {'\0'};
+        saveMrc.SetFile(acOutMrc, acExt);
         saveMrc.GDoIt(gfImg, piSize);
 }
 

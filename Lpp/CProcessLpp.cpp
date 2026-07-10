@@ -121,7 +121,8 @@ void CProcessLpp::mSaveFullSpect(void)
 	}
 	//---------------------------
 	CSaveTempMrc saveMrc;
-	saveMrc.SetFile(acOutMrc, "");
+	char acExt[16] = {'\0'};
+	saveMrc.SetFile(acOutMrc, acExt);
 	saveMrc.DoIt(pfImg, 2, aiImgSize);
 	if(pfImg != 0L) delete[] pfImg;
 }

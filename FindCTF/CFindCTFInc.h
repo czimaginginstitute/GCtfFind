@@ -577,7 +577,6 @@ public:
 	void Clean(void);
 	void Setup1(CCTFTheory* pCtfTheory);
 	void Setup2(int* piImgSize);
-	void SetPhase(float fInitPhase, float fPhaseRange); // degree
 	void SetHalfSpect(float* pfCtfSpect);
 	float* GetHalfSpect(bool bRaw, bool bToHost);
 	void GetSpectSize(int* piSize, bool bHalf);
@@ -608,7 +607,6 @@ protected:
 	int m_aiCmpSize[2];
 	int m_aiImgSize[2];
 	float m_afResRange[2];
-	float m_afPhaseRange[2]; // for searching extra phase in degree
 };
 
 class CFindCtf1D : public CFindCtfBase

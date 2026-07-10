@@ -162,14 +162,8 @@ void CFindSeriesCtfs::mProcessPackage(int iPackage)
 void CFindSeriesCtfs::mProcessFull(void)
 {
 	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
-	CInput* pInput = CInput::GetInstance();
-	//-------------------------------------
-        float fPhaseRange = fmaxf(pInput->m_afExtPhase[1], 0.0f);
-	pFindCtf2D->SetPhase(pInput->m_afExtPhase[0], fPhaseRange);
-	//---------------------------------------------------------
 	pFindCtf2D->Do2D();
 	mGetResults();
-	//------------
 	m_pRefPackage = m_pPackage;
 }
 

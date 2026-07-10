@@ -1,5 +1,4 @@
 #include "CFindCTFInc.h"
-#include <CuUtilFFT/GFFT2D.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -106,7 +105,7 @@ void GCalcSpectrum::DoPad
 	float* gfSpectrum,
 	int* piPadSize
 )
-{	CuUtilFFT::GFFT2D aGFFT2D;
+{	GFFT2D aGFFT2D;
 	int aiFFTSize[] = {0, piPadSize[1]};
 	aiFFTSize[0] = (piPadSize[0] / 2 - 1) * 2;
 	aGFFT2D.CreatePlan(aiFFTSize, true);

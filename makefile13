@@ -1,10 +1,9 @@
 PRJHOME = $(shell pwd)
-CONDA = $(HOME)/miniconda3
 CUDAHOME = $(HOME)/nvidia/cuda-13.1
 CUDAINC = $(CUDAHOME)/include
 CUDALIB = $(CUDAHOME)/lib64
-PRJINC = $(PRJHOME)/Include
-PRJLIB = $(PRJHOME)/Lib
+PRJINC = $(PRJHOME)/LibSrc/Include
+PRJLIB = $(PRJHOME)/LibSrc/Lib
 #------------------------------
 CUSRCS = ./Util/GAddImages.cu \
 	 ./Util/GCalcMeanStd.cu \
@@ -12,6 +11,8 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./Util/GCalcMoment2D.cu \
 	 ./Util/GNormalize2D.cu \
 	 ./Util/GThreshold2D.cu \
+	 ./Util/GFFT1D.cu \
+	 ./Util/GFFT2D.cu \
 	 ./Util/GFtResize2D.cu \
 	 ./Util/GRoundEdge2D.cu \
 	 ./Lpp/GCalcPhase2D.cu \
@@ -35,6 +36,7 @@ CUSRCS = ./Util/GAddImages.cu \
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
+        ./CSearchRanges.cpp \
 	./Util/CSimpleFuncs.cpp \
 	./Util/CPad2D.cpp \
 	./Util/CParseArgs.cpp \
@@ -89,8 +91,6 @@ exe: $(OBJS)
 	@g++ -g -pthread -m64 $(OBJS) \
 	$(PRJLIB)/libmrcfile.a \
 	$(PRJLIB)/libutil.a \
-	$(PRJLIB)/libcuutil.a \
-	$(PRJLIB)/libcuutilfft.a \
 	-L$(CUDALIB) -L/usr/lib64 \
 	-lcufft -lcudart -lcuda -lc -lm -lpthread \
 	-o GCtfFind
@@ -106,4 +106,4 @@ exe: $(OBJS)
 	@echo $< has been compiled.
 
 clean:
-	@rm -f $(OBJS) $(CUCPPS) *.h~ makefile~ GCtfFind
+	@rm -f $(OBJS) $(CUCPPS) *.h~ makefile13~ GCtfFind

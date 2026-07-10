@@ -113,8 +113,8 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 		iPhase = i / iDfSteps;
 		fDefocus = m_afDfRange[0] + iFocus * fDfStep;
 		fPhase = m_afPhaseRange[0] + iPhase * fPsStep;
-		if(fPhase < m_afPhaseRange[0]) continue;
-		else if(fPhase > m_afPhaseRange[1]) continue;
+		if(fDefocus > m_afDfRange[1]) continue;
+		if(fPhase > m_afPhaseRange[1]) continue;
 		//----------------
 		mCalcCTF(fDefocus, fPhase);
 		pfCCs[i] = mCorrelate();
@@ -135,25 +135,19 @@ void CFindDefocus1D::mBrutalForceSearch(float afResult[3])
 
 void CFindDefocus1D::mRefineDefocus(void)
 {
-	float fStep = 100.0f;
+	float fRange = m_afDfRange[1] - m_afDfRange[0];
+	if(fRange <= 0) return;
 	//---------------------------
-	for(int i=1; i<500; i++)
-	{	float fDf = m_afDfRange[0] - fStep * i;
-		if(fDf < 1000) break;
+	int iSteps = (int)(fRange / 100 + 1);
+	float fStep = fRange / iSteps;
+	//---------------------------
+	for(int i=0; i<iSteps; i++)
+	{	float fDf = m_afDfRange[0] + i * fStep;
+		if(fDf > m_afDfRange[1]) break;
 		//-------------------
 		mCalcCTF(fDf, m_fBestPhase);
 		float fCC = mCorrelate();
 		//-------------------
-		if(fCC > m_fMaxCC)
-		{	m_fMaxCC = fCC;
-			m_fBestDf = fDf;
-		}
-	}
-	//---------------------------
-	for(int i=1; i<500; i++)
-	{	float fDf = m_afDfRange[1] + fStep * i;
-		mCalcCTF(fDf, m_fBestPhase);
-		float fCC = mCorrelate();
 		if(fCC > m_fMaxCC)
 		{	m_fMaxCC = fCC;
 			m_fBestDf = fDf;
@@ -163,29 +157,19 @@ void CFindDefocus1D::mRefineDefocus(void)
 
 void CFindDefocus1D::mRefinePhase(void)
 {
-	float fStep = 1.0f;
-	float fInitPhase = m_fBestPhase;
+	float fRange = m_afPhaseRange[1] - m_afPhaseRange[0];
+	if(fRange <= 0) return;
 	//---------------------------
-	for(int i=0; i<180; i++)
-	{	float fPhase = fInitPhase - i * fStep;
-		if(fPhase < m_afPhaseRange[0]) break;
-		//-------------------
-		mCalcCTF(m_fBestDf, fPhase);
-		float fCC = mCorrelate();
-		//-------------------
-		if(fCC > m_fMaxCC)
-		{	m_fMaxCC = fCC;
-			m_fBestPhase = fPhase;
-		}
-	}
+	int iSteps = (int)(fRange / 1.0f + 1);
+	float fStep = fRange / iSteps;
 	//---------------------------
-	fInitPhase = m_fBestPhase;
-	for(int i=0; i<180; i++)
-	{	float fPhase = fInitPhase + i * fStep;
+	for(int i=0; i<iSteps; i++)
+	{	float fPhase = m_afPhaseRange[0] + i * fStep;
 		if(fPhase > m_afPhaseRange[1]) break;
 		//-------------------
 		mCalcCTF(m_fBestDf, fPhase);
 		float fCC = mCorrelate();
+		//-------------------
 		if(fCC > m_fMaxCC)
 		{	m_fMaxCC = fCC;
 			m_fBestPhase = fPhase;

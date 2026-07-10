@@ -26,12 +26,17 @@ public:
 	char m_acAngFile[256];
 	char m_acInSuffix[256];
 	char m_acInSkips[256];
+	//---------------------------
 	float m_fKv;
 	float m_fCs;
 	float m_fAmpContrast;
 	float m_fPixSize;
-	float m_fAstRange;
+	//---------------------------
+	float m_afDefocus[2];
+	float m_afAstRatio[2];
+	float m_afAstAngle[2];
 	float m_afExtPhase[2];
+	//---------------------------
 	float m_afTiltRange[2];
 	int m_iTileSize;
 	int m_iLogSpect;
@@ -43,23 +48,68 @@ private:
 	int m_argc;
 	char** m_argv;
 	char m_acInMrcTag[32];
+	char m_acInSuffixTag[32];
+	char m_acInSkipsTag[32];
+	char m_acSerialTag[32];
+	//---------------------------
 	char m_acOutDirTag[32];
-	char m_acOutCtfTag[32];
 	char m_acAngFileTag[32];
+	//---------------------------
 	char m_acTiltRangeTag[32];
 	char m_acKvTag[32];
 	char m_acCsTag[32];
 	char m_acAmpContrastTag[32];
 	char m_acPixelSizeTag[32];
-	char m_acAstRangeTag[32];
+	//---------------------------
+	char m_acDefocusTag[32];
+	char m_acAstRatioTag[32];
+	char m_acAstAngleTag[32];
 	char m_acExtPhaseTag[32];
+	//---------------------------
 	char m_acTileSizeTag[32];
 	char m_acLogSpectTag[32];
-	char m_acSerialTag[32];
-	char m_acInSuffixTag[32];
-	char m_acInSkipsTag[32];
 	char m_acGpuIDTag[32];
 	static CInput* m_pInstance;
+};
+
+class CSearchRanges
+{
+public:
+	static CSearchRanges* GetInstance(void);
+	static void DeleteInstance(void);
+	~CSearchRanges(void);
+	void Setup(void);
+	//---------------------------
+	void GetDefocus(float* pfRange);
+	void GetAstRatio(float* pfRange);
+	void GetAstAngle(float* pfRange);
+	void GetExtPhase(float* pfRange);
+	//---------------------------
+	float GetDefocus(bool bCentVal);  // central value or range
+	float GetAstRatio(bool bCentVal);
+	float GetAstAngle(bool bCentVal);
+	float GetExtPhase(bool bCentVal);
+	//---------------------------
+	bool bDefocus(void);
+	bool bAstRatio(void);
+	bool bAstAngle(void);
+	bool bExtPhase(void);
+	//---------------------------
+	void CheckDefocus(float* pfDfRange);
+	void CheckAstRatio(float* pfAstRatioRange);
+	void CheckAstAngle(float* pfAstAngleRange);
+	void CheckExtPhase(float* pfExtPhaseRange);
+private:
+	CSearchRanges(void);
+	void mSetDfRange(void);
+	void mSetAstRange(void);
+	void mSetPhaseRange(void);
+	//---------------------------
+	float m_afDefocus[2];
+	float m_afAstRatio[2];
+	float m_afAstAngle[2];
+	float m_afExtPhase[2];
+	static CSearchRanges* m_pInstance;
 };
 
 class CCtfPackage

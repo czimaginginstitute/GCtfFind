@@ -22,9 +22,12 @@ void CParseArgs::Set(int argc, char* argv[])
 	m_argv = argv;
 }
 
-bool CParseArgs::FindVals(const char* pcTag, int aiRange[2])
-{
-	aiRange[0] = -1;
+bool CParseArgs::FindVals
+(	const char* pcTag, 
+	int aiRange[2],
+	int iNumVals
+)
+{	aiRange[0] = -1;
 	aiRange[1] = 0;
 	for(int i=1; i<m_argc; i++)
 	{	if(strcasecmp(m_argv[i], pcTag) != 0) continue;
@@ -32,7 +35,7 @@ bool CParseArgs::FindVals(const char* pcTag, int aiRange[2])
 		break;
 	}
 	if(aiRange[0] == -1) return false;
-	//--------------------------------
+	//---------------------------
 	for(int j=aiRange[0]; j<m_argc; j++)
 	{	char* argv = m_argv[j];
 		char* endp = 0L;
@@ -48,6 +51,8 @@ bool CParseArgs::FindVals(const char* pcTag, int aiRange[2])
 		}
 		break;
 	}
+	//---------------------------
+	if(aiRange[1] > iNumVals) aiRange[1] = iNumVals;
 	return true;
 }
 

@@ -126,12 +126,14 @@ void CFindDefocus2D::DoIt
 	float fBFactor = 25.0f;
 	mCalcMetric(pfDfRange, pfPhaseRange, fBFactor);
 	//---------------------------
+	/*
 	this->RefineParam(m_gfSpect, 0.0, 0.5f, 0.005f, 1);
 	this->RefineParam(m_gfSpect, 0.0f, 180.0f, 1.0f, 2);
 	this->RefineParam(m_gfSpect, 0.0f, 180.0f, 1.0f, 3);
 	this->CalcCtfRes(m_gfSpect);
 	float fMetric1 = 0.5f * m_afNewParam[4] + 0.5f /
 		m_afNewParam[5];
+	*/
 }
 
 void CFindDefocus2D::RefineParam

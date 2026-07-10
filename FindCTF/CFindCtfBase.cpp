@@ -2,7 +2,6 @@
 #include "../CMainInc.h"
 #include "../Util/CUtilInc.h"
 #include "../MrcUtil/CMrcUtilInc.h"
-#include <CuUtilFFT/GFFT2D.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,7 +20,6 @@ CFindCtfBase::CFindCtfBase(void)
 	m_fScore = 0.0f;
 	m_fPixSize = 1.0f;
 	mInitPointers();
-	memset(m_afPhaseRange, 0, sizeof(m_afPhaseRange));
 	memset(m_aiImgSize, 0, sizeof(m_aiImgSize));
 }
 
@@ -73,16 +71,6 @@ void CFindCtfBase::Setup2(int* piImgSize)
 	m_aiImgSize[0] = piImgSize[0];
 	m_aiImgSize[1] = piImgSize[1];
 	m_pGenAvgSpect->SetSizes(m_aiImgSize, m_aiCmpSize[1]);
-}
-
-void CFindCtfBase::SetPhase(float fInitPhase, float fPhaseRange)
-{
-	m_fExtPhase = fInitPhase;
-	m_afPhaseRange[0] = fInitPhase - 0.5f * fPhaseRange;
-	m_afPhaseRange[1] = fInitPhase + 0.5f * fPhaseRange;
-	//---------------------------
-	m_afPhaseRange[0] = fmaxf(m_afPhaseRange[0], 0.0f);
-	m_afPhaseRange[1] = fminf(m_afPhaseRange[1], 180.0f);
 }
 
 void CFindCtfBase::SetHalfSpect(float* pfCtfSpect)
@@ -200,7 +188,7 @@ void CFindCtfBase::mLowpass(void)
 	calcSpectrum.GenFullSpect(m_gfCtfSpect, m_aiCmpSize,
 	   m_gfFullSpect, bFullPadded);
 	//-----------------
-	CuUtilFFT::GFFT2D aGFFT2D;
+	GFFT2D aGFFT2D;
 	int aiFFTSize[] = {(m_aiCmpSize[0] - 1) * 2, m_aiCmpSize[1]};
 	aGFFT2D.CreatePlan(aiFFTSize, true);
 	aGFFT2D.Forward(m_gfFullSpect, true);

@@ -20,7 +20,8 @@ static void mGSaveTempMrc
         pInput->GetOutFile(pcMrcName, 0L, acOutMrc);
         //---------------------------
         CSaveTempMrc saveMrc;
-        saveMrc.SetFile(acOutMrc, "");
+	char acExt[16] = {'\0'};
+        saveMrc.SetFile(acOutMrc, acExt);
         saveMrc.GDoIt(gfImg, piSize);
 }	
 

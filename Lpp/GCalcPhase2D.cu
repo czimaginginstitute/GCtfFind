@@ -1,5 +1,5 @@
 #include "CLppInc.h"
-#include <CuUtilFFT/GFFT2D.h>
+#include "../Util/CUtilInc.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
 

@@ -130,3 +130,26 @@ Changes:
    after that hit.
 2. Added Lpp folder where the xLpp handling code stays.
 3. Added makefile12 for Cuda 12. Removed makefile and makefile10
+
+Version 1.1.8 [07-08-2026]
+--------------------------
+Bug Fix:
+1. Fixed makefile12 and makefile13 to reflect the changes in directory
+   structure listed in Changes 1 and 2.
+Changes:
+1. Removed Lib folder and added LibSrc folder containing the source code
+   of Mrcfile and Util modules. 
+2. Removed Include folder containing the header files for Mrcfile and Util
+   modules. LibSrc contains the Include folder.
+3. Removed the dependency on CuUtilFFT. Put GFFT1D.cu and GFFT2D.cu in
+   Util directory. GCtfFind does not contain any binary files needed
+   to generate the executable.
+4. 1) Users can specify the search range for defocus, astigmatism
+   amplitude, orientation, and extra phase shift using -Defocus, -AstRatio,
+   -AstAngle, and -ExtPhase. 2) Each of them takes two values as input, the
+   central value and the search range separated by a white space. 3) If the
+   range is set to zero, the central value will not be refined. 4) If the
+   range is given, the refinement will not go beyond that range.
+5. Users can specify a search range for defocus that falls into overfocus
+   domain.  
+

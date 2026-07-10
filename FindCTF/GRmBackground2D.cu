@@ -1,5 +1,4 @@
 #include "CFindCTFInc.h"
-#include <CuUtil/DeviceArray2D.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 

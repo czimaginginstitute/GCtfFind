@@ -29,16 +29,16 @@ class CParseArgs
 {
 public:
         CParseArgs(void);
-        ~CParseArgs(void);
-        void Set(int argc, char* argv[]);
-        bool FindVals(const char* pcTag, int aiRange[2]);
-        void GetVals(int aiRange[2], float* pfVals);
-        void GetVals(int aiRange[2], int* piVal);
-        void GetVal(int iArg, char* pcVal);
-        void GetVals(int aiRange[2], char** ppcVals);
+	~CParseArgs(void);
+	void Set(int argc, char* argv[]);
+	bool FindVals(const char* pcTag, int aiRange[2], int iNumVals);
+	void GetVals(int aiRange[2], float* pfVals);
+	void GetVals(int aiRange[2], int* piVal);
+	void GetVal(int iArg, char* pcVal);
+	void GetVals(int aiRange[2], char** ppcVals);
 private:
-        char** m_argv;
-        int m_argc;
+	char** m_argv;
+	int m_argc;
 };
 
 class GAddImages
@@ -66,6 +66,53 @@ public:
 	//---------------------------
 	float m_fMean;
 	float m_fStd;
+};
+
+class GFFT1D
+{
+public:
+	GFFT1D(void);
+	~GFFT1D(void);
+	void DestroyPlan(void);
+	void CreatePlan
+	( int iFFTSize,
+	  int iNumLines,
+	  bool bForward
+	);
+	void Forward
+	( float* gfPadLines,
+	  bool bNorm
+	);
+	void Inverse
+	( cufftComplex* gCmpLines
+	);
+private:
+        int m_iFFTSize;
+	int m_iNumLines;
+	cufftType m_cufftType;
+	cufftHandle m_cufftPlan;
+};
+
+class GFFT2D
+{
+public:
+	GFFT2D(void);
+	~GFFT2D(void);
+	void SetStream(cudaStream_t stream);
+	void DestroyPlan(void);
+	void CreatePlan(int* piFFTSize, bool bForward);
+	void Forward(float* gfPadImg, bool bNorm);
+	void Forward(float* gfImg, cufftComplex* gCmp, bool bNorm);
+	void Inverse(cufftComplex* gCmp);
+	void Inverse(cufftComplex* gCmp, float* gfImg);
+	void RemoveAmp(cufftComplex* gCmp, int* piCmpSize);
+private:
+	void mNormalize(cufftComplex* gCmpImg);
+	void mCheckError(cufftResult error, const char* pcFunc);
+	int m_aiFFTSize[2];
+	cufftType m_cufftType;
+	cufftHandle m_cufftPlan;
+	cudaStream_t m_aStream;
 };
 
 class GRoundEdge2D
