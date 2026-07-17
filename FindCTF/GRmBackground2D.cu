@@ -24,7 +24,7 @@ static __global__ void mGRemove
 	//-----------------
 	float fR = blockIdx.x * 0.5f / (gridDim.x - 1);
 	fR = sqrtf(fR * fR + y * y / (float)(iCmpY * iCmpY));
-	if(fR < 0.04) 
+	if(fR < fMinFreq) 
 	{	gfOutSpect[i] = 0.0f;
 		return;
 	}
@@ -32,7 +32,7 @@ static __global__ void mGRemove
 	int iBoxSize = fMinFreq * iCmpY;
 	if(iBoxSize > (0.3f * iCmpY)) iBoxSize = (int)(0.3f * iCmpY);
 	iBoxSize = iBoxSize / 2 * 2 + 1;
-	if(iBoxSize < 7) iBoxSize = 7;
+	if(iBoxSize < 15) iBoxSize = 15;
 	//-------------------------------------------------------
 	// (iX, iY): origin at lower left corner
 	// (xxm yy): origin at iX = 0, iY = iHalfY

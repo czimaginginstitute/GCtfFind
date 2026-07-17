@@ -153,3 +153,22 @@ Changes:
 5. Users can specify a search range for defocus that falls into overfocus
    domain.  
 
+Version 1.2.0 [07-10-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. Added revised user manuals.
+
+Version 1.2.1 [07-13-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. FindCTF/CFindCtfBase.cpp: The low resolution has been changed to 22A at
+   1A pixel size.
+2. Important: FindCTF/GRmBackground2D.cu: The box size has been changed to
+   match the low resolution setting. (int iBoxSize = fMinFreq * iCmpY;)
+   This change masked a larger low-frequency disk, resulting in more
+   robust correlation against the theoretical CTF.
+3. FindCTF/CFindDefocus2D.cpp The B-factor has been changed to 5 from 25.
+   This change increases weights on high-frequency components.
+
