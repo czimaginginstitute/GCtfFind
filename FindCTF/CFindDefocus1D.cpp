@@ -195,7 +195,7 @@ float CFindDefocus1D::mCorrelate(void)
 	if(fMinFreq < fCutOn) fMinFreq = fCutOn;
 	if(fMaxFreq > fCutOff) fMaxFreq = fCutOff;
 	//---------------------------
-	m_pGCC1D->Setup(fMinFreq, fMaxFreq, 1.0f);
+	m_pGCC1D->Setup(fMinFreq, fMaxFreq, 100.0f);
 	float fCC = m_pGCC1D->DoIt(m_gfCtf1D, m_gfRadialAvg);
 	return fCC;
 }

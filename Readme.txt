@@ -172,3 +172,14 @@ Changes:
 3. FindCTF/CFindDefocus2D.cpp The B-factor has been changed to 5 from 25.
    This change increases weights on high-frequency components.
 
+Version 1.2.2 [07-24-2026]
+--------------------------
+Bug Fix:
+1. The astigmatic angle from inital estimation can be outside the user
+   specified range. The fix is to add 180 degree to or subtract it from
+   from the initial estimate to make it in the user specified range.
+Changes:
+1. FindCtf/CRescaleImage: changed the new pixel size to 1.5A to balance
+   between high mag data collected with high defocus and low-mag data
+   at low defocus.
+

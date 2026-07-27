@@ -50,14 +50,16 @@ void CRescaleImage::Setup(int* piRawSize, float fRawPixSize)
 	memcpy(m_aiRawSize, piRawSize, sizeof(m_aiRawSize));
 	m_fRawPixSize = fRawPixSize;
 	//---------------------------
-	m_fBinning = 1.2f / fRawPixSize;
+	m_fBinning = 1.5f / fRawPixSize;
 	if(m_fBinning <= 1) m_fBinning = 1.0f;
 	m_fPixSizeN = m_fRawPixSize * m_fBinning;
 	//---------------------------
 	m_aiNewSize[0] = (int)(m_aiRawSize[0] / m_fBinning + 0.5f);
-	m_aiNewSize[1] = (int)(m_aiRawSize[1] / m_fBinning + 0.5f);
 	m_aiNewSize[0] = m_aiNewSize[0] / 2 * 2;
-	m_aiNewSize[1] = m_aiNewSize[1] / 2 * 2;
+	m_fBinning = m_aiRawSize[0] / (float)m_aiNewSize[0];
+	m_fPixSizeN = m_fBinning * m_fRawPixSize;
+	//---------------------------
+	m_aiNewSize[1] = (int)(m_aiRawSize[1] / m_fBinning + 0.5f) / 2 * 2;
 	//---------------------------
 	m_aiPadSizeN[0] = (m_aiNewSize[0] / 2 + 1) * 2;
 	m_aiPadSizeN[1] = m_aiNewSize[1];

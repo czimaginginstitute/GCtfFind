@@ -163,8 +163,6 @@ void CSearchRanges::mSetAstRange(void)
 	fDelta = pInput->m_afAstAngle[1] * 0.5f;
 	m_afAstAngle[0] = pInput->m_afAstAngle[0] - fDelta;
 	m_afAstAngle[1] = pInput->m_afAstAngle[0] + fDelta;
-	m_afAstAngle[0] = fmax(m_afAstAngle[0], 0.0f);
-	m_afAstAngle[1] = fmax(m_afAstAngle[1], 0.0f);
 }
 
 void CSearchRanges::mSetPhaseRange(void)

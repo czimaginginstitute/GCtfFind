@@ -123,7 +123,7 @@ void CFindDefocus2D::DoIt
 )
 {	m_gfSpect = gfSpect;
 	//---------------------------
-	float fBFactor = 5.0f;
+	float fBFactor = 16.0f;
 	mCalcMetric(pfDfRange, pfPhaseRange, fBFactor);
 }
 

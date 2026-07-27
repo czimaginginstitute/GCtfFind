@@ -50,9 +50,11 @@ void CFindCtf2D::Do2D(void)
         m_pFindDefocus2D->SetInitVals(fDfMean, m_fAstRatio,
            m_fAstAng, m_fExtPhase);
 	//---------------------------
-	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();	
-	float afDfRange[] = {m_fDfMax - 3000.0f, m_fDfMax + 3000.0f};
+	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();
+	float fDfRange = pSeaRanges->GetDefocus(false) * 0.5f;
+	float afDfRange[] = {m_fDfMax - fDfRange, m_fDfMax + fDfRange};
 	pSeaRanges->CheckDefocus(afDfRange);
+	//---------------------------
 	float afPhaseRange[2] = {0.0f};
 	pSeaRanges->GetExtPhase(afPhaseRange);
 	//---------------------------
@@ -60,15 +62,10 @@ void CFindCtf2D::Do2D(void)
 	m_pFindDefocus2D->DoIt(m_gfCtfSpect, afDfRange, afPhaseRange);
 	mGetResults();
 	//---------------------------
-	mDoIt(8000.0f, 0.5f, 180.0f, 180.0f, 5);
 	mDoIt(4000.0f, 0.1f, 60.0f, 60.0f, 5);
-	//---------------------------
-	for(int i=0; i<5; i++)
-	{	mDoIt(2000.0f, 0.1f, 10.0f, 20.0f, 5);
-	}
 	m_pFindDefocus2D->CalcCtfRes(m_gfCtfSpect);
 	mGetResults();
-	printf("Ast: %f  %f\n", m_fAstRatio, m_fAstAng);
+	printf("Astigmatism: %f  %f\n", m_fAstRatio, m_fAstAng);
 }
 
 void CFindCtf2D::Refine
@@ -159,10 +156,17 @@ void CFindCtf2D::mEstAstigmatism(void)
 	bool bCentVal = true;
 	m_fAstRatio = pSeaRanges->GetAstRatio(bCentVal);
 	m_fAstAng = pSeaRanges->GetAstAngle(bCentVal);
+	//---------------------------
 	if(pSeaRanges->bAstAngle())
 	{	GAstAngle astAngle;
 		astAngle.DoIt(m_gfCtfSpect, m_aiCmpSize);
 		m_fAstAng = astAngle.m_fAstAng;
+		//-------------------
+		float afRange[2] = {0.0f};
+		pSeaRanges->GetAstAngle(afRange);
+		if(m_fAstAng < afRange[0]) m_fAstAng += 180.0f;
+		if(m_fAstAng > afRange[1]) m_fAstAng -= 180.0f;
+		//-------------------
 		printf("Ast angle init est: %.2f\n", m_fAstAng);
 	}
 	//---------------------------

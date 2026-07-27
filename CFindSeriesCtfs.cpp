@@ -167,43 +167,6 @@ void CFindSeriesCtfs::mProcessFull(void)
 	m_pRefPackage = m_pPackage;
 }
 
-void CFindSeriesCtfs::mProcessRefine(void)
-{
-	CInput* pInput = CInput::GetInstance();
-	CInputFolder* pInputFolder = CInputFolder::GetInstance();	
-	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
-	bool bTomo = pInputFolder->IsTomo();
-	//--------------------------------------------------
-	float afDfRange[2] = {0.0f}, afAstRatio[2] = {0.0f};
-	float afAstAngle[2] = {0.0f}, afExtPhase[2] = {0.0f};
-	//---------------------------------------------------
-	float fDfMin = m_pRefPackage->m_fDfMin;
-	float fDfMax = m_pRefPackage->m_fDfMax;
-	float fDfRange = 5000.0f * pInput->m_fPixSize 
-	   * pInput->m_fPixSize;
-	afDfRange[0] = 0.5f * (fDfMin + fDfMax); 
-	afDfRange[1] = fmaxf(afDfRange[0] * 0.5f, fDfRange);
-	afAstRatio[0] = CFindCtfHelp::CalcAstRatio(fDfMin, fDfMax);
-	afAstAngle[0] = m_pRefPackage->m_fAzimuth;
-	afExtPhase[0] = m_pRefPackage->m_fExtPhase;
-	//-----------------------------------------
-	if(!bTomo)
-	{	afAstRatio[1] = 0.04f;
-		afAstAngle[1] = 30.0f;
-		if(pInput->m_afExtPhase[1] > 0) 
-		{	afExtPhase[1] = 40.0f;
-		}
-	}
-	//------------------------------------------------------------
-	pFindCtf2D->Refine(afDfRange, afAstRatio, 
-	   afAstAngle, afExtPhase);
-	mGetResults();
-	//-------------------------
-	if(m_pRefPackage->m_fScore < m_pPackage->m_fScore)
-	{	m_pRefPackage = m_pPackage;
-	}
-}
-
 void CFindSeriesCtfs::mGetResults(void)
 {
 	CFindCtf2D* pFindCtf2D = (CFindCtf2D*)m_pvFindCtf2D;
