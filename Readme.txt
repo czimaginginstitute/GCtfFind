@@ -183,3 +183,14 @@ Changes:
    between high mag data collected with high defocus and low-mag data
    at low defocus.
 
+Version 1.2.3 [07-28-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. FindCTF/CFindCtfBase.cpp: removed mLowpass because adding a lowpass
+   filter changed the envelope of the amplitude spectrum.
+2. FindCTF: Added GEstBFactor1D.cu to estimate the B-Factor used to
+   the theoretical CTF during its correlation with the spectrum. The
+   estimated B-factor is used for both 1D and 2D correlation in GCC1D.cu
+   and GCC2D.cu
+3. FindCTF: CRescaleImage.cpp: changed the final pixel size to 1.3A from 1.2A.

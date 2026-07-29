@@ -48,10 +48,11 @@ void CFindCtf2D::Do2D(void)
 	//---------------------------
 	float fDfMean = (m_fDfMin + m_fDfMax) * 0.5f;
         m_pFindDefocus2D->SetInitVals(fDfMean, m_fAstRatio,
-           m_fAstAng, m_fExtPhase);
+	   m_fAstAng, m_fExtPhase);
+	m_pFindDefocus2D->SetBFactor(m_fBFactor);
 	//---------------------------
 	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();
-	float fDfRange = pSeaRanges->GetDefocus(false) * 0.5f;
+	float fDfRange = pSeaRanges->GetDefocus(false) * 0.25f;
 	float afDfRange[] = {m_fDfMax - fDfRange, m_fDfMax + fDfRange};
 	pSeaRanges->CheckDefocus(afDfRange);
 	//---------------------------

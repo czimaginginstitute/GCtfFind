@@ -28,6 +28,7 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GRemoveMean.cu \
 	 ./FindCTF/GRoundEdge.cu \
 	 ./FindCTF/GSpectralCC2D.cu \
+	 ./FindCTF/GEstBFactor1D.cu \
 	 ./FindCTF/GCC1D.cu \
 	 ./FindCTF/GCC2D.cu \
 	 ./FindCTF/GAstRatio.cu \

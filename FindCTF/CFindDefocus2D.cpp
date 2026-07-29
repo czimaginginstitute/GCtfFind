@@ -98,6 +98,11 @@ void CFindDefocus2D::SetResRange(float afResRange[2])
 	m_pGCC2D->SetFreqRange(fMinFreq, fMaxFreq);
 }
 
+void CFindDefocus2D::SetBFactor(float fBFactor)
+{
+	m_fBFactor = fBFactor;
+}
+
 //--------------------------------------------------------------------
 // 1. DoIt() should be called after CFindDefocus1D::DoIt(), which
 //    generates an estimate of m_fDfMean.
@@ -122,9 +127,7 @@ void CFindDefocus2D::DoIt
 	float* pfPhaseRange
 )
 {	m_gfSpect = gfSpect;
-	//---------------------------
-	float fBFactor = 16.0f;
-	mCalcMetric(pfDfRange, pfPhaseRange, fBFactor);
+	mCalcMetric(pfDfRange, pfPhaseRange);
 }
 
 void CFindDefocus2D::RefineParam
@@ -211,13 +214,12 @@ void CFindDefocus2D::CalcCtfRes(float* gfSpect)
 
 float CFindDefocus2D::mCalcMetric
 (	float* pfDfRange,
-        float* pfPhaseRange,
-	float fBFactor
+        float* pfPhaseRange
 )
 {	float fDfStep = 100.0f;
         float fPhStep = 1.0f;
         //---------------------------
-        m_pGCC2D->SetBFactor(fBFactor);
+        m_pGCC2D->SetBFactor(m_fBFactor);
         //---------------------------
         float fBestDF = 0.0f;
         float fBestPH = 0.0f;

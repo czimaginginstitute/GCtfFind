@@ -28,6 +28,7 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GRemoveMean.cu \
 	 ./FindCTF/GRoundEdge.cu \
 	 ./FindCTF/GSpectralCC2D.cu \
+	 ./FindCTF/GEstBFactor1D.cu \
 	 ./FindCTF/GCC1D.cu \
 	 ./FindCTF/GCC2D.cu \
 	 ./FindCTF/GAstRatio.cu \
@@ -106,4 +107,4 @@ exe: $(OBJS)
 	@echo $< has been compiled.
 
 clean:
-	@rm -f $(OBJS) $(CUCPPS) *.h~ makefile12~ GCtfFind
+	@rm -f $(OBJS) $(CUCPPS) *.h~ makefile13~ GCtfFind

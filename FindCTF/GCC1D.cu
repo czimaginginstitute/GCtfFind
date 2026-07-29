@@ -34,11 +34,11 @@ static __global__ void mGCalculate
 	if(x >= iSize) return;
 	//---------------------------
 	if(x >= fFreqLow && x < fFreqHigh)
-	{	float fX = x / (iSize - 1.0f);
+	{	float fX = x / ((iSize - 1.0f) * 2.0f);
+		float fW = expf(-fBFactor * fX * fX);
 		float fSpec = gfSpectrum[x];
-		float fCTF = fabsf(gfCTF[x]);
+		float fCTF = (fabsf(gfCTF[x]) - 0.5f) * fW;
 		//-------------------
-		fCTF = (fCTF - 0.5f) * expf(-fBFactor * fX * fX);
 		s_gfCC[threadIdx.x] = fCTF * fSpec;
 		s_gfStd1[threadIdx.x] = fCTF * fCTF;
 		s_gfStd2[threadIdx.x] = fSpec * fSpec;

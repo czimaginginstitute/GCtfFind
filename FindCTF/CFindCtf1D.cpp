@@ -57,6 +57,7 @@ void CFindCtf1D::Do1D(void)
 	if(!pSeaRanges->bDefocus()) return;
 	//---------------------------
 	mCalcRadialAverage();
+	mEstimateBFactor();
 	mFindDefocus();
 	//---------------------------
 	float fDfRange = fmaxf(0.3f * m_fDfMin, 3000.0f); 
@@ -73,9 +74,26 @@ void CFindCtf1D::Refine1D(float fInitDf, float fDfRange)
 	m_fScore = (float)-1e20;
 	//----------------------
 	mCalcRadialAverage();
+	mEstimateBFactor();
 	mRefineDefocus(fDfRange);
 	printf("1D estimate: %8.2f  %8.2f  %8.2f\n\n",
 	   m_fDfMin, m_fExtPhase, m_fScore);
+}
+
+void CFindCtf1D::mEstimateBFactor(void)
+{
+	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
+	GEstBFactor1D estBFactor;
+	//---------------------------
+	float fL = m_aiCmpSize[1] * pCtfParam->m_fPixelSize;
+	float fMinFreq = fL / m_afResRange[0];
+	float fMaxFreq = fL / m_afResRange[1];
+	//---------------------------
+	float fBStep = 2.0f;
+	int iNumSteps = 100;
+	//---------------------------
+        estBFactor.Setup(fMinFreq, fMaxFreq, fBStep, iNumSteps);
+	m_fBFactor = estBFactor.DoIt(m_gfRadialAvg, m_aiCmpSize[0]);
 }
 
 void CFindCtf1D::mFindDefocus(void)
@@ -86,7 +104,10 @@ void CFindCtf1D::mFindDefocus(void)
 	pSeaRanges->GetDefocus(afDfRange);
 	pSeaRanges->GetExtPhase(afPhaseRange);
 	//---------------------------
-	m_pFindDefocus1D->SetResRange(m_afResRange);
+	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
+	m_pFindDefocus1D->SetFreqRange(m_afResRange, 
+	   pCtfParam->m_fPixelSize, m_aiCmpSize[0]);
+	m_pFindDefocus1D->SetBFactor(m_fBFactor);
 	m_pFindDefocus1D->DoIt(afDfRange, afPhaseRange, m_gfRadialAvg);
 	//---------------------------
 	m_fExtPhase = m_pFindDefocus1D->m_fBestPhase;
@@ -111,7 +132,7 @@ void CFindCtf1D::mRefineDefocus(float fDfRange)
 	afPhaseRange[1] = afPhaseRange[0] + fRange;
 	pSeaRanges->CheckExtPhase(afPhaseRange);
 	//---------------------------
-	m_pFindDefocus1D->SetResRange(m_afResRange);
+	m_pFindDefocus1D->SetBFactor(m_fBFactor);
 	m_pFindDefocus1D->DoIt(afDfRange, afPhaseRange, m_gfRadialAvg);
 	//---------------------------
 	m_fExtPhase = m_pFindDefocus1D->m_fBestPhase;

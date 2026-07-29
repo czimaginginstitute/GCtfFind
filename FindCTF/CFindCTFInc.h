@@ -283,6 +283,27 @@ private:
 	float m_afMaskSize[2];
 };
 
+class GEstBFactor1D
+{
+public:
+	GEstBFactor1D(void);
+	~GEstBFactor1D(void);
+	void Setup
+	( float fFreqLow,
+	  float fFreqHigh,
+	  float fBStep,
+	  int iNumStep
+	);
+	float DoIt(float* gfSpectrum, int iSize);
+private:
+	void mClean(void);
+	float m_fFreqLow;
+	float m_fFreqHigh;
+	float m_fBStep;
+	int m_iNumSteps;
+	float* m_gfBuf;
+};
+
 class GCC2D
 {
 public:
@@ -472,8 +493,16 @@ public:
 	CFindDefocus1D(void);
 	~CFindDefocus1D(void);
 	void Clean(void);
-	void Setup(CCTFParam* pCtfParam, int iCmpSize);
-	void SetResRange(float afRange[2]); // angstrom
+	void Setup
+	( CCTFParam* pCtfParam, 
+	  int iCmpSize
+	);
+	void SetFreqRange
+	( float afRange[2], // angstrom
+	  float fPixSize,   // angstrom
+	  int iCmpSizea     // N / 2 + 1
+	);
+	void SetBFactor(float fBFactor);
 	void DoIt
 	( float afDfRange[2],    // f0, delta angstrom
 	  float afPhaseRange[2], // p0, delta degree
@@ -488,15 +517,17 @@ private:
 	void mRefinePhase(void);
 	void mCalcCTF(float fDefocus, float fExtPhase);
 	float mCorrelate(void);
+	//---------------------------
 	CCTFParam* m_pCtfParam;
 	GCC1D* m_pGCC1D;
 	GCalcCTF1D m_aGCalcCTF1D;
-	float m_afResRange[2];
+	float m_afFreqRange[2];
 	float m_afDfRange[2];    // f0, delta in angstrom
 	float m_afPhaseRange[2]; // p0, delta in degree
 	float* m_gfRadialAvg;
 	int m_iCmpSize;
 	float* m_gfCtf1D;
+	float m_fBFactor;
 };
 
 class CFindDefocus2D 
@@ -507,6 +538,7 @@ public:
 	void Clean(void);
 	void Setup(CCTFParam* pCtfParam, int* piCmpSize);
 	void SetResRange(float afResRange[2]); // angstrom
+	void SetBFactor(float fBFactor);
 	void SetInitVals
 	( float fDfMean, 
 	  float fAstRatio, 
@@ -543,8 +575,7 @@ public:
 private:
 	float mCalcMetric
 	( float* pfDfRange, 
-	  float* pfPhaseRange, 
-	  float fBFactor
+	  float* pfPhaseRange
 	);
 	float mCorrelate(void);
 	//---------------------------
@@ -560,6 +591,7 @@ private:
 	GCC2D* m_pGCC2D;
 	GCalcCTF2D m_aGCalcCtf2D;
 	CCTFParam* m_pCtfParam;
+	float m_fBFactor;
 	//-------------------------------------------
 	// 1) [DfMean, AstRatio, AstAngle, ExtPhase, 
 	//    CtfScore, CtfRes]
@@ -607,6 +639,7 @@ protected:
 	int m_aiCmpSize[2];
 	int m_aiImgSize[2];
 	float m_afResRange[2];
+	float m_fBFactor;
 };
 
 class CFindCtf1D : public CFindCtfBase
@@ -619,6 +652,7 @@ public:
 	void Do1D(void);
 	void Refine1D(float fInitDf, float fDfRange);
 protected:
+	void mEstimateBFactor(void);
 	void mFindDefocus(void);
 	void mRefineDefocus(float fDfRange);
 	void mCalcRadialAverage(void);
