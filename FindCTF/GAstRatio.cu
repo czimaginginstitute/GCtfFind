@@ -206,10 +206,5 @@ void GAstRatio::mCalcEigens(float* pfCovar)
 	float fLambda2 = ((a + c) - fDelta) * 0.5f;
 	//---------------------------
 	m_fAstRatio = fLambda2 / fLambda1;
-	//printf("Covar matrix: %.4e  %.4e  %.4e\n", pfCovar[0],
-	//	pfCovar[1], pfCovar[2]);
-	//printf("lambda: %.4e  %.4e\n", fLambda1, fLambda2);
-	//printf("Astigmatism: %.4e  %.4e\n\n", m_fAstRatio);
-	
 }
 

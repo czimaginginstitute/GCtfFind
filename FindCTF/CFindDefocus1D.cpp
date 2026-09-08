@@ -48,14 +48,14 @@ void CFindDefocus1D::Setup(CCTFParam* pCtfParam, int iCmpSize)
 	m_pGCC1D->SetSize(m_iCmpSize);	
 }
 
-void CFindDefocus1D::SetFreqRange
-(	float afResRange[2],
-	float fPixSize,
-	int iCmpSize
-)
-{	float fRes1 = ((m_iCmpSize - 1) * 2) * m_pCtfParam->m_fPixelSize;
-        m_afFreqRange[0] = fRes1 / afResRange[0];
-       	m_afFreqRange[1] = fRes1 / afResRange[1];
+//--------------------------------------------------------------------
+// 1. pfResRange: low and high resolutions in A to specify the
+//    range where the spectra are used in cross correlation.
+//--------------------------------------------------------------------
+void CFindDefocus1D::SetResRange(float* pfResRange)
+{
+	m_afResRange[0] = pfResRange[0];
+	m_afResRange[1] = pfResRange[1];	
 }
 
 void CFindDefocus1D::SetBFactor(float fBFactor)
@@ -71,6 +71,10 @@ void CFindDefocus1D::DoIt
 {	memcpy(m_afDfRange, afDfRange, sizeof(float) * 2);
 	memcpy(m_afPhaseRange, afPhaseRange, sizeof(float) * 2);
 	m_gfRadialAvg = gfRadialAvg;
+	//--------------------------
+	m_pGCC1D->SetResRange(m_afResRange, 
+	   m_pCtfParam->m_fPixelSize,
+	   m_fBFactor);
 	//--------------------------
 	m_fMaxCC = (float)-1e20;
 	float afResult[3] = {0.0f};
@@ -196,7 +200,6 @@ void CFindDefocus1D::mCalcCTF(float fDefocus, float fExtPhase)
 
 float CFindDefocus1D::mCorrelate(void)
 {
-	m_pGCC1D->Setup(m_afFreqRange[0], m_afFreqRange[1], m_fBFactor);
 	float fCC = m_pGCC1D->DoIt(m_gfCtf1D, m_gfRadialAvg);
 	return fCC;
 }

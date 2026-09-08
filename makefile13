@@ -14,6 +14,7 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./Util/GFFT1D.cu \
 	 ./Util/GFFT2D.cu \
 	 ./Util/GFtResize2D.cu \
+	 ./Util/GRealResize2D.cu \
 	 ./Util/GRoundEdge2D.cu \
 	 ./Lpp/GCalcPhase2D.cu \
 	 ./Lpp/GFindTwinPeaks.cu \

@@ -7,6 +7,9 @@
 
 using namespace GCTFFind;
 
+static __constant__ float c_afResRange[2];  // res/pix_size
+static __constant__ float c_afIceRange[2];  // res/pix_size
+
 //-----------------------------------------------------------------------------
 // 1. The zero-frequency component is at (x=0, y=iCmpY/2). The frequency
 //    range in y direction is [-CmpY/2, CmpY/2).
@@ -16,8 +19,6 @@ static __global__ void mGCalculate
 (	float* gfCTF,
 	float* gfSpectrum,
 	int iSize,
-	float fFreqLow,
-	float fFreqHigh,
 	float fBFactor,
 	float* gfRes
 )
@@ -33,7 +34,10 @@ static __global__ void mGCalculate
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	if(x >= iSize) return;
 	//---------------------------
-	if(x >= fFreqLow && x < fFreqHigh)
+	float fX = x / ((iSize - 1.0f) * 2.0f);
+	bool bNotIce = (fX < c_afIceRange[0] || fX > c_afIceRange[1]);
+	//---------------------------
+	if(fX >= c_afResRange[0] && bNotIce)
 	{	float fX = x / ((iSize - 1.0f) * 2.0f);
 		float fW = expf(-fBFactor * fX * fX);
 		float fSpec = gfSpectrum[x];
@@ -76,13 +80,21 @@ GCC1D::~GCC1D(void)
 	if(m_gfRes != 0L) cudaFree(m_gfRes);
 }
 
-void GCC1D::Setup
-(	float fFreqLow,  // pixel in Fourier domain
-	float fFreqHigh, // pixel in Fourier domain
+void GCC1D::SetResRange
+(	float* pfResRange, // [low, high] (A)
+	float fPixSize,    // angstrom
 	float fBFactor
 )
-{	m_fFreqLow = fFreqLow;
-	m_fFreqHigh = fFreqHigh;
+{	float afResRange[2] = {0.0f};
+	afResRange[0] = fPixSize / pfResRange[0];
+	afResRange[1] = fPixSize / pfResRange[1];
+	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
+	//---------------------------
+	float afIceRange[2] = {0.0f};
+	afIceRange[0] = fPixSize / 3.9f;
+	afIceRange[1] = fPixSize / 3.4;
+	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
+	//---------------------------
 	m_fBFactor = fBFactor;
 }
 
@@ -105,7 +117,7 @@ float GCC1D::DoIt(float* gfCTF, float* gfSpectrum)
 	//----------------------------
 	tBytes = sizeof(float) * aBlockDim.x * 3;
 	mGCalculate<<<aGridDim, aBlockDim, tBytes>>>(gfCTF, gfSpectrum, 
-	   m_iSize, m_fFreqLow, m_fFreqHigh, m_fBFactor, m_gfRes);
+	   m_iSize, m_fBFactor, m_gfRes);
      	//-----------------------------------------------
 	float* pfRes = new float[aGridDim.x * 3];
 	tBytes = sizeof(float) * aGridDim.x * 3;
@@ -125,6 +137,7 @@ float GCC1D::DoIt(float* gfCTF, float* gfSpectrum)
 	return (float)dCC;
 }
 
+/*
 float GCC1D::DoCPU
 (	float* gfCTF,
 	float* gfSpectrum,
@@ -151,3 +164,4 @@ float GCC1D::DoCPU
 	delete[] pfSpectrum;
 	return (float)dCC;
 }
+*/

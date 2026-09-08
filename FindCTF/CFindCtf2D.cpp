@@ -37,8 +37,7 @@ void CFindCtf2D::Setup1(CCTFTheory* pCtfTheory)
 	//--------------------------
 	m_pFindDefocus2D = new CFindDefocus2D;
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
-	m_pFindDefocus2D->Setup(pCtfParam, m_aiCmpSize);
-	m_pFindDefocus2D->SetResRange(m_afResRange);
+	m_pFindDefocus2D->Setup(pCtfParam, m_afResRange, m_aiCmpSize);
 }
 
 void CFindCtf2D::Do2D(void)
@@ -59,14 +58,12 @@ void CFindCtf2D::Do2D(void)
 	float afPhaseRange[2] = {0.0f};
 	pSeaRanges->GetExtPhase(afPhaseRange);
 	//---------------------------
-	m_pFindDefocus2D->SetResRange(m_afResRange);
 	m_pFindDefocus2D->DoIt(m_gfCtfSpect, afDfRange, afPhaseRange);
 	mGetResults();
 	//---------------------------
 	mDoIt(4000.0f, 0.1f, 60.0f, 60.0f, 5);
 	m_pFindDefocus2D->CalcCtfRes(m_gfCtfSpect);
 	mGetResults();
-	printf("Astigmatism: %f  %f\n", m_fAstRatio, m_fAstAng);
 }
 
 void CFindCtf2D::Refine
@@ -75,11 +72,17 @@ void CFindCtf2D::Refine
 	float afAstAngle[2],
 	float afExtPhase[2]
 )
-{	m_pFindDefocus2D->SetResRange(m_afResRange);
-	m_pFindDefocus2D->SetInitVals(afDfMean[0], afAstRatio[0],
-	   afAstAngle[0], afExtPhase[0]);
+{	m_pFindDefocus2D->SetInitVals(
+	   afDfMean[0], 
+	   afAstRatio[0],
+	   afAstAngle[0], 
+	   afExtPhase[0]);
 	//---------------------------
-	m_pFindDefocus2D->Refine(m_gfCtfSpect, afDfMean[1], afExtPhase[1]);
+	m_pFindDefocus2D->Refine(
+	   m_gfCtfSpect, 
+	   afDfMean[1], 
+	   afExtPhase[1]);
+	//---------------------------
 	m_pFindDefocus2D->CalcCtfRes(m_gfCtfSpect);
 	mGetResults();
 }
@@ -167,8 +170,6 @@ void CFindCtf2D::mEstAstigmatism(void)
 		pSeaRanges->GetAstAngle(afRange);
 		if(m_fAstAng < afRange[0]) m_fAstAng += 180.0f;
 		if(m_fAstAng > afRange[1]) m_fAstAng -= 180.0f;
-		//-------------------
-		printf("Ast angle init est: %.2f\n", m_fAstAng);
 	}
 	//---------------------------
 	if(pSeaRanges->bAstRatio())
@@ -176,6 +177,5 @@ void CFindCtf2D::mEstAstigmatism(void)
 		astRatio.DoIt(m_gfCtfSpect, m_aiCmpSize);
 		m_fAstRatio = astRatio.m_fAstRatio;
 		m_fAstRatio = fminf(m_fAstRatio, 0.1f);
-		printf("Ast ratio init est: %.3f\n", m_fAstRatio);
 	}
 }

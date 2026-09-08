@@ -160,37 +160,42 @@ int GSpectralCC2D::DoIt
 }
 
 int GSpectralCC2D::mFindShell0143(float* pfCC, int iSize)
-{	
-	float fMinCC = (float)1e20;
-	for(int i=1; i<iSize; i++)
-	{	if(pfCC[i] < fMinCC)
-		{	fMinCC = pfCC[i];
+{
+	float fMaxCC = (float)-1e20;
+	int iMaxCC = -1;
+	for(int i=0; i<iSize; i++)
+	{	if(pfCC[i] > fMaxCC)
+		{	fMaxCC = pfCC[i];
+			iMaxCC = i;
 		}
 	}
-	if(fMinCC > 0.143f) return -1;
+	//---------------------------
+	float fMinCC = (float)1e20;
+	int iMinCC = -1;
+	for(int i=iMaxCC; i<iSize; i++)
+	{	if(pfCC[i] < fMinCC)
+		{	fMinCC = pfCC[i];
+			iMinCC = i;
+		}
+	}
+	if(fMinCC > 0.143f) return iMinCC;
 	//---------------------------
 	fMinCC = (0.143f + fMinCC) * 0.5f;
-	int iMaxShell = -1;
-	for(int i=iSize-1; i>1; i--)
+	int iHitShell = iMinCC;
+	for(int i=iMinCC; i>iMaxCC; i--)
 	{	if(pfCC[i] > 0.143f) continue;
 		else if(pfCC[i] < fMinCC) continue;
 		//-------------------
-		iMaxShell = i;
+		iHitShell = i;
 		break;
 	}
-	if(iMaxShell == -1) return -1;
 	//---------------------------
-	int iShell0143 = -1;
-	int iCount = 0;
-	for(int i=iMaxShell; i>=1; i--)
+	int iShell0143 = iHitShell;
+	for(int i=iHitShell; i>=iMaxCC; i--)
 	{	if(pfCC[i] >= 0.143f)
-		{	iCount += 1;
-			if(iCount == 3) 
-			{	iShell0143 = i;
-				break;
-			}
+		{	iShell0143 = i;
+			break;
 		}
-		else iCount = 0;
 	}
 	return iShell0143;
 }

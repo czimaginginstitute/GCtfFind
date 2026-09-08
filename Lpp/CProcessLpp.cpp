@@ -61,7 +61,7 @@ void CProcessLpp::DoIt(void* pvCtfPackage)
 	int* piPadSize = m_pCalcAmpSpect->m_aiPadSize;
 	//---------------------------
 	mLowpass();
-	mSaveFullSpect();	
+	//mSaveFullSpect();	
 	//---------------------------
 	m_pFindTwinPeaks->DoIt(m_pCalcAmpSpect->m_gfPadSpect);
 	int iBytes = sizeof(float) * 2;
@@ -98,13 +98,6 @@ void CProcessLpp::mSaveFullSpect(void)
 	char acOutMrc[512] = {'\0'};
 	pInput->GetOutFile(acMrcName, "_AMP.mrc", acOutMrc);
 	//---------------------------
-	/*
-	CPad2D pad2D;
-	int aiImgSize[2] = {0};
-	pad2D.GetImgSize(piPadSize, aiImgSize);
-	float* pfImg = new float[aiImgSize[0] * aiImgSize[1]];
-	pad2D.Unpad(gfPadSpect, piPadSize, pfImg);
-	*/
 	int aiImgSize[2] = {0};
 	aiImgSize[0] = (int)(piPadSize[1] * m_fPixSize / 10.0f) / 2 * 2;
 	aiImgSize[1] = aiImgSize[0];

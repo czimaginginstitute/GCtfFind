@@ -69,33 +69,25 @@ float CFindDefocus2D::GetCtfRes(void)
 	return m_afNewParam[5];
 }
 
-void CFindDefocus2D::Setup(CCTFParam* pCtfParam, int* piCmpSize)
-{
-	this->Clean();
+void CFindDefocus2D::Setup
+(	CCTFParam* pCtfParam,
+	float* pfResRange,
+	int* piCmpSize
+)
+{	this->Clean();
 	//---------------------------
 	m_pCtfParam = pCtfParam;
+	memcpy(m_aiCmpSize, piCmpSize, sizeof(int) * 2);
+	//---------------------------
 	m_aGCalcCtf2D.SetParam(m_pCtfParam);
 	//---------------------------
-	memcpy(m_aiCmpSize, piCmpSize, sizeof(int) * 2);
 	cudaMalloc(&m_gfCtf2D, sizeof(float) 
 	   * m_aiCmpSize[0] * m_aiCmpSize[1]);
 	//---------------------------
 	m_pGCC2D = new GCC2D;
 	m_pGCC2D->SetSize(m_aiCmpSize);	
-}
-
-void CFindDefocus2D::SetResRange(float afResRange[2])
-{
-	float fCutOn = (m_aiCmpSize[0] - 1) * 0.01f; 
-	float fCutOff = (m_aiCmpSize[0] - 1) * 0.9f;
-	//---------------------------
-	float fRes1 = m_aiCmpSize[1] * m_pCtfParam->m_fPixelSize;
-	float fMinFreq = fRes1 / afResRange[0];
-	float fMaxFreq = fRes1 / afResRange[1];
-	if(fMinFreq < fCutOn) fMinFreq = fCutOn;
-	if(fMaxFreq > fCutOff) fMaxFreq = fCutOff;
-	//---------------------------
-	m_pGCC2D->SetFreqRange(fMinFreq, fMaxFreq);
+	m_pGCC2D->SetResRange(pfResRange,
+	   m_pCtfParam->m_fPixelSize);
 }
 
 void CFindDefocus2D::SetBFactor(float fBFactor)
@@ -219,8 +211,6 @@ float CFindDefocus2D::mCalcMetric
 {	float fDfStep = 100.0f;
         float fPhStep = 1.0f;
         //---------------------------
-        m_pGCC2D->SetBFactor(m_fBFactor);
-        //---------------------------
         float fBestDF = 0.0f;
         float fBestPH = 0.0f;
         float fBestCC = (float)-1e20;
@@ -262,7 +252,7 @@ float CFindDefocus2D::mCorrelate(void)
 	//---------------------------
 	m_aGCalcCtf2D.DoIt(fDfMin, fDfMax, fAstRad, fExtPhaseRad, 
 	   m_gfCtf2D, m_aiCmpSize);
-	float fCC = m_pGCC2D->DoIt(m_gfCtf2D, m_gfSpect);
+	float fCC = m_pGCC2D->DoIt(m_gfCtf2D, m_gfSpect, m_fBFactor);
 	return fCC;
 }
 

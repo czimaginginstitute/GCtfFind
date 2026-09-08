@@ -63,8 +63,10 @@ void CFindCtf1D::Do1D(void)
 	float fDfRange = fmaxf(0.3f * m_fDfMin, 3000.0f); 
 	mRefineDefocus(fDfRange);
 	//---------------------------
-	printf("1D estimate: %8.2f  %8.2f  %8.2f\n\n",
-	   m_fDfMin, m_fExtPhase, m_fScore);	
+	printf("1D estimattion:\n"
+           " Defocus    ext_phase   score\n"
+	   " %8.2f  %8.2f  %8.2f\n\n",
+	   m_fDfMin, m_fExtPhase, m_fScore);
 }
 
 void CFindCtf1D::Refine1D(float fInitDf, float fDfRange)
@@ -76,7 +78,9 @@ void CFindCtf1D::Refine1D(float fInitDf, float fDfRange)
 	mCalcRadialAverage();
 	mEstimateBFactor();
 	mRefineDefocus(fDfRange);
-	printf("1D estimate: %8.2f  %8.2f  %8.2f\n\n",
+	printf("1D estimattion:\n   " 
+	   "Defocus    ext_phase   score\n"
+	   "%8.2f  %8.2f  %8.2f\n\n",
 	   m_fDfMin, m_fExtPhase, m_fScore);
 }
 
@@ -92,8 +96,12 @@ void CFindCtf1D::mEstimateBFactor(void)
 	float fBStep = 2.0f;
 	int iNumSteps = 100;
 	//---------------------------
-        estBFactor.Setup(fMinFreq, fMaxFreq, fBStep, iNumSteps);
-	m_fBFactor = estBFactor.DoIt(m_gfRadialAvg, m_aiCmpSize[0]);
+        estBFactor.Setup(m_afResRange, 
+	   pCtfParam->m_fPixelSize,
+	   fBStep, iNumSteps);
+	m_fBFactor = estBFactor.DoIt(
+	   m_gfRadialAvg, 
+	   m_aiCmpSize[0]);
 }
 
 void CFindCtf1D::mFindDefocus(void)
@@ -105,8 +113,7 @@ void CFindCtf1D::mFindDefocus(void)
 	pSeaRanges->GetExtPhase(afPhaseRange);
 	//---------------------------
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
-	m_pFindDefocus1D->SetFreqRange(m_afResRange, 
-	   pCtfParam->m_fPixelSize, m_aiCmpSize[0]);
+	m_pFindDefocus1D->SetResRange(m_afResRange);
 	m_pFindDefocus1D->SetBFactor(m_fBFactor);
 	m_pFindDefocus1D->DoIt(afDfRange, afPhaseRange, m_gfRadialAvg);
 	//---------------------------

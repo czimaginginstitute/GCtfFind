@@ -5,6 +5,9 @@
 
 using namespace GCTFFind;
 
+static __constant__ float c_afResRange[2];  // res/pix_size
+static __constant__ float c_afIceRange[2];  // res/pix_size
+
 //-----------------------------------------------------------------------------
 // 1. Fitting a 1D Gaussian distribution of f(x) = exp(-B * fx^2) to the
 //    absolute 1D radio averaged spectrum, |gfSpectrum(x)|.
@@ -15,8 +18,6 @@ using namespace GCTFFind;
 static __global__ void mGEstimate
 (	float* gfSpectrum,
 	int iSize,
-	float fFreqLow,
-	float fFreqHigh,
 	float fBStep,
 	float* gfCCs
 )
@@ -29,16 +30,19 @@ static __global__ void mGEstimate
 	float fBFactor = blockIdx.x * fBStep;
 	//---------------------------
 	int x = 0;
-	float fCC = 0.0f, fMeanS = 0.0f, fMeanB = 0.0f;
-	float fStdS = 0.0f, fStdB = 0.0f, fCount = 0.0f;
+	float fCC = 0.0f, fCount = 0.0f;
+	float fMeanS = 0.0f, fMeanB = 0.0f;
+	float fStdS = 0.0f, fStdB = 0.0f;
 	float fN = (iSize - 1.0f) * 2;
 	//---------------------------
 	for(x=threadIdx.x; x<iSize; x+=blockDim.x)
-	{	if(x < fFreqLow && x > fFreqHigh) continue;
+	{	float fX = x / fN;
+		if(fX < c_afResRange[0]) continue;
+		if(fX >= c_afIceRange[0] && 
+		   fX <= c_afIceRange[1]) continue;
 		//-------------------
 		float fS = fabsf(gfSpectrum[x]) / iSize;
-		float fB = x / fN;
-		fB = expf(-fBFactor * fB * fB);
+		float fB = expf(-fBFactor * fX * fX);
 		//-------------------
 		fCC += (fS * fB);
 		fMeanS += fS;
@@ -99,13 +103,20 @@ GEstBFactor1D::~GEstBFactor1D(void)
 }
 
 void GEstBFactor1D::Setup
-(	float fFreqLow,   // pixel in Fourier domain
-	float fFreqHigh,  // pixel in Fourier domain
-	float fBStep,
-	int iNumSteps
+(	float* pfResRange, // [low, high], ex: [30.0f, 4.0f]
+	float fPixSize,    // angstrom
+	float fBStep,      // step size for searching opt. B-factor
+	int iNumSteps      // number of searching steps
 )
-{	m_fFreqLow = fFreqLow;
-	m_fFreqHigh = fFreqHigh;
+{	float afResRange[2] = {0.0f};
+	afResRange[0] = pfResRange[0];
+	afResRange[1] = pfResRange[1];
+	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
+	//---------------------------
+	float afIceRange[2] = {0.0f};
+        afIceRange[0] = fPixSize / 3.9f;
+	afIceRange[1] = fPixSize / 3.4;
+	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
 	//---------------------------
 	if(iNumSteps > m_iNumSteps) mClean();
 	m_iNumSteps = iNumSteps;
@@ -121,8 +132,8 @@ float GEstBFactor1D::DoIt(float* gfSpectrum, int iSize)
 	dim3 aGridDim(m_iNumSteps, 1);
 	//---------------------------
 	size_t tBytes = 6 * sizeof(float) * aBlockDim.x;
-	mGEstimate<<<aGridDim, aBlockDim, tBytes>>>(gfSpectrum, 
-	   iSize, m_fFreqLow, m_fFreqHigh, 
+	mGEstimate<<<aGridDim, aBlockDim, tBytes>>>(
+	   gfSpectrum, iSize, 
 	   m_fBStep, m_gfBuf);
 	//---------------------------
 	float* pfRes = new float[m_iNumSteps];

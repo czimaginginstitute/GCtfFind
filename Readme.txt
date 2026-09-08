@@ -194,3 +194,21 @@ Changes:
    estimated B-factor is used for both 1D and 2D correlation in GCC1D.cu
    and GCC2D.cu
 3. FindCTF: CRescaleImage.cpp: changed the final pixel size to 1.3A from 1.2A.
+
+Version 1.2.4 [09-04-2026]
+--------------------------
+General:
+1. Explore initial estimation of astigmatism
+2. Exclude ice ring at 3.7A in the CTF estimation.
+3. Explore sector averaged profile.
+Changes:
+1. For 1D estimation, exclude ice ring at [3.9A, 3.4A]. CFindDefocus1D and
+   GCC1D yields much closer 1D estimate with respect to 2D estimate.
+2. For 2D estimation, exclude ice ring at [3.52A, 3.48A]. Reason: at 3.9A
+   the structural Thon ring signals are still significant as opposed to 
+   ice rings, which are, although strong, fragmented.
+3. Util/GFtResize.cu: normalize the spectrum before resizing it.
+4. Revised GAstAngle.cu. The covariance is absolute intensity weighted.
+5. Added makefile13
+6. Revised GSpectralCC2D.cu for the determination of the Thon ring resolution.
+

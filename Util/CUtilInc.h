@@ -180,6 +180,37 @@ public:
 	   int* piImgSize, bool bPadded);
 };
 
+class GRealResize2D
+{
+public:
+	GRealResize2D(void);
+	~GRealResize2D(void);
+	static void GetNewSize
+	( int* piInSize,
+	  bool bInPadded,
+	  float fBin,
+	  int* piOutSize,
+	  bool bOutPadded
+	);
+	static float GetBinning
+	( int* piInSize,
+	  bool bInPadded,
+	  int* piOutSize,
+	  bool bOutPadded
+	);
+	void DoIt
+	( float* gfInImg,
+	  int* piInSize,
+	  bool bInPadded,
+	  float* gfOutImg,
+	  int* piOutSize,
+	  bool bOutPadded,
+	  bool bSum,
+	  cudaStream_t stream
+	);
+	float m_fBin;
+};
+
 class GFtResize2D
 {
 public:

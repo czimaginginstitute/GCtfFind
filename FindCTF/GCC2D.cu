@@ -5,6 +5,10 @@
 
 using namespace GCTFFind;
 
+static __constant__ int c_aiCmpSize[2];
+static __constant__ float c_afResRange[2];  // res/pix_size
+static __constant__ float c_afIceRange[2];  // res/pix_size
+
 //-----------------------------------------------------------------------------
 // 1. The zero-frequency component is at (x=0, y=iCmpY/2). The frequency
 //    range in y direction is [-CmpY/2, CmpY/2).
@@ -13,33 +17,33 @@ using namespace GCTFFind;
 static __global__ void mGCalc2D
 (	float* gfCTF2D, 
 	float* gfSpectrum,
-	int iCmpX,
-	int iCmpY,
-	float fFreqLow2,
-	float fFreqHigh2,
 	float fBFactor,
 	float* gfRes
 )
 {	extern __shared__ float s_afShared[];
 	float* s_afSumStd1 = &s_afShared[blockDim.x];
 	float* s_afSumStd2 = &s_afSumStd1[blockDim.x];
-	//--------------------------------------------
-	float fSumCC = 0.0f, fSumStd1 = 0.0f, fSumStd2 = 0.0f;
-	float fX = 0.0f, fY = 0.0f;
+	//-------------------------------------
+	float fSumCC = 0.0f;
+	float fSumStd1 = 0.0f; 
+	float fSumStd2 = 0.0f;
 	int iOffset = 0, i = 0;
-	for(int y=blockIdx.x; y<iCmpY; y+=gridDim.x)
-	{	fY = (y - iCmpY * 0.5f) / iCmpY;
-		if((fY * fY) < fFreqLow2) continue;
-		iOffset = y * iCmpX;
-		for(int x=threadIdx.x; x<iCmpX; x+=blockDim.x)
-		{	fX = (0.5f * x) / (iCmpX - 1);
-			if((fX * fX) < fFreqLow2) continue;
-			float fR2 = fX * fX + fY * fY;
-			if(fR2 <fFreqLow2 || fR2 > fFreqHigh2) continue;
-			//------------------
+	//-------------------------------------
+	for(int y=blockIdx.x; y<c_aiCmpSize[1]; y+=gridDim.x)
+	{	float fY = (y - c_aiCmpSize[1] * 0.5f) / c_aiCmpSize[1];
+		iOffset = y * c_aiCmpSize[0];
+		//-----------------------------
+		for(int x=threadIdx.x; x<c_aiCmpSize[0]; x+=blockDim.x)
+		{	float fX = (0.5f * x) / (c_aiCmpSize[0] - 1);
+			float fR = sqrtf(fX * fX + fY * fY);
+			//---------------------
+			bool bIce = (fR >= c_afIceRange[0] &&
+			   fR <= c_afIceRange[1]);
+			if(fR < c_afResRange[0] || bIce) continue;
+			//---------------------
 			i = iOffset + x;
-			float fC = (fabsf(gfCTF2D[i]) - 0.5f) 
-			   * expf(-fBFactor * fR2);
+			float fC = (fabsf(gfCTF2D[i]) - 0.5f) *
+			   expf(-fBFactor * fR * fR);
 			float fS = gfSpectrum[i];
 			fSumCC += (fC * fS);
 			fSumStd1 += (fC * fC);
@@ -102,9 +106,7 @@ static __global__ void mGCalc1D(float* gfSum)
 
 GCC2D::GCC2D(void)
 {
-	m_fBFactor = 1.0f;
 	m_gfRes = 0L;
-	m_fBFactor = 25.0f;
 }
 
 GCC2D::~GCC2D(void)
@@ -112,27 +114,19 @@ GCC2D::~GCC2D(void)
 	if(m_gfRes != 0L) cudaFree(m_gfRes);
 }
 
-void GCC2D::SetFreqRange
-(	float fFreqLow,  // [0, 0.5]
-	float fFreqHigh // [0, 0.5]
+void GCC2D::SetResRange
+(	float* pfResRange, // ex: [30A, 4A]
+	float fPixSize    // angstrom
 )
-{	m_fFreqLow = fFreqLow;
-	m_fFreqHigh = fFreqHigh;
-}
-
-void GCC2D::SetFreqLow(float fFreqLow)
-{
-	m_fFreqLow = fFreqLow;
-}
-
-void GCC2D::SetFreqHigh(float fFreqHigh)
-{
-	m_fFreqHigh = fFreqHigh;
-}
-
-void GCC2D::SetBFactor(float fBFactor)
-{
-	m_fBFactor = fBFactor;
+{	float afResRange[2] = {0.0f};
+	afResRange[0] = fPixSize / pfResRange[0];
+	afResRange[1] = fPixSize / pfResRange[1];
+	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
+	//---------------------------
+	float afIceRange[2] = {0.0f};
+	afIceRange[0] = fPixSize / 3.52f;
+	afIceRange[1] = fPixSize / 3.48f;
+	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
 }
 
 void GCC2D::SetSize(int* piCmpSize)
@@ -155,25 +149,23 @@ void GCC2D::SetSize(int* piCmpSize)
 	else m_iGridDimX = 64;
 	//-------------------------------------------
 	cudaMalloc(&m_gfRes, 3 * m_iGridDimX * sizeof(float));
+	cudaMemcpyToSymbol(c_aiCmpSize, m_aiCmpSize, sizeof(int) * 2);
 }
 
 float GCC2D::DoIt
 (	float* gfCTF, 
-	float* gfSpectrum
+	float* gfSpectrum,
+	float fBFactor
 )
 {	dim3 aBlockDim(m_iBlockDimX, 1);
 	dim3 aGridDim(m_iGridDimX, 1);
 	size_t tSmBytes = sizeof(float) * aBlockDim.x * 3;
 	//------------------------------------------------
-	float fFreqLow2 = m_fFreqLow / m_aiCmpSize[1];
-	float fFreqHigh2 = m_fFreqHigh / m_aiCmpSize[1];
-	if(fFreqHigh2 > 0.75f) fFreqHigh2 = 0.75f;
-	fFreqLow2 *= fFreqLow2;
-	fFreqHigh2 *= fFreqHigh2;
-	//-----------------------
-	mGCalc2D<<<aGridDim, aBlockDim, tSmBytes>>>(gfCTF, gfSpectrum, 
-	   m_aiCmpSize[0], m_aiCmpSize[1], fFreqLow2, fFreqHigh2, 
-	   m_fBFactor, m_gfRes);
+	mGCalc2D<<<aGridDim, aBlockDim, tSmBytes>>>(
+	   gfCTF, 
+	   gfSpectrum, 
+	   fBFactor, 
+	   m_gfRes);
         //-------------------------------------------------------
 	aBlockDim.x = aGridDim.x; aBlockDim.y = 1;
 	aGridDim.x = 1; aGridDim.y = 1;

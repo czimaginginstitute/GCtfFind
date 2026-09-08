@@ -134,7 +134,7 @@ static __global__ void mGLocalSearch
 	if(threadIdx.x != 0) return;
 	gfPeakLoc[0] = s_afLocs[0];	
 }
-
+/*
 static void gSaveMrc(float* gfImg, int* piSize, const char* pcSuffix)
 {
 	CInput* pInput = CInput::GetInstance();
@@ -146,7 +146,7 @@ static void gSaveMrc(float* gfImg, int* piSize, const char* pcSuffix)
         saveMrc.SetFile(acOutMrc, acExt);
         saveMrc.GDoIt(gfImg, piSize);
 }
-
+*/
 GFindTwinPeaks::GFindTwinPeaks(void)
 {
 	m_pCufft2D = 0L;
@@ -226,8 +226,8 @@ void GFindTwinPeaks::mCalcRotSum(void)
 	mGCalcRotSum<<<aGridDim, aBlockDim>>>(m_gfHalfSpect,
 	   m_gfRotSum, m_aiCmpSize[0], iHalfY);
 
-	int aiSize[] = {m_aiCmpSize[0], iHalfY};
-	gSaveMrc(m_gfRotSum, aiSize, "_RotSum.mrc");
+	//int aiSize[] = {m_aiCmpSize[0], iHalfY};
+	//gSaveMrc(m_gfRotSum, aiSize, "_RotSum.mrc");
 }
 
 void GFindTwinPeaks::mFindAvgPeak(void)

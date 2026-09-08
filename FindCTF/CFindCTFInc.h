@@ -289,16 +289,14 @@ public:
 	GEstBFactor1D(void);
 	~GEstBFactor1D(void);
 	void Setup
-	( float fFreqLow,
-	  float fFreqHigh,
+	( float* pfResRange, // ex: [30A, 4A]
+	  float fPixSize,    // angstrom 
 	  float fBStep,
 	  int iNumStep
 	);
 	float DoIt(float* gfSpectrum, int iSize);
 private:
 	void mClean(void);
-	float m_fFreqLow;
-	float m_fFreqHigh;
 	float m_fBStep;
 	int m_iNumSteps;
 	float* m_gfBuf;
@@ -309,21 +307,17 @@ class GCC2D
 public:
 	GCC2D(void);
 	~GCC2D(void);
-	void SetFreqRange
-	(  float fFreqLow,  // relative freq [0, 0.5]
-	   float fFreqHigh  // relative freq [0, 0.5]
+	void SetResRange
+	( float* pfResRange,
+	  float fPixSize
 	);
-	void SetFreqLow(float fFreqLow);   // [0, 0.5]
-	void SetFreqHigh(float fFreqHigh); // [0, 0.5]
-	//---------------------------
-	void SetBFactor(float fBFactor);
-	//---------------------------
 	void SetSize(int* piCmpSize); // half spectrum
-	float DoIt(float* gfCTF, float* gfSpectrum);
+	float DoIt
+	( float* gfCTF, 
+	  float* gfSpectrum,
+	  float fBFactor
+	);
 private:
-	float m_fFreqLow;
-	float m_fFreqHigh;
-	float m_fBFactor;
 	int m_aiCmpSize[2];
 	int m_iGridDimX;
 	int m_iBlockDimX;
@@ -336,22 +330,23 @@ public:
 	GCC1D(void);
 	~GCC1D(void);
 	void SetSize(int iSize);
-	void Setup
-	(  float fFreqLow,   // relative freq [0, 0.5]
-	   float fFreqHigh,  // relative freq [0, 0.5]
-	   float fBFactor
+	void SetResRange
+	( float* pfResRange, // [low, high] in A
+	  float fPixSize,    // in A
+	  float fBFactor
 	);
-	float DoIt(float* gfCTF, float* gfSpectrum);
+	float DoIt
+	( float* gfCTF, 
+	  float* gfSpectrum
+	);
 	float DoCPU
-	(  float* gfCTF,
-	   float* gfSpectrum,
-	   int iSize
+	( float* gfCTF,
+	  float* gfSpectrum,
+	  int iSize
 	);
 private:
 	int m_iSize;
 	float* m_gfRes;
-	float m_fFreqLow;
-	float m_fFreqHigh;
 	float m_fBFactor;
 };
 
@@ -497,10 +492,8 @@ public:
 	( CCTFParam* pCtfParam, 
 	  int iCmpSize
 	);
-	void SetFreqRange
-	( float afRange[2], // angstrom
-	  float fPixSize,   // angstrom
-	  int iCmpSizea     // N / 2 + 1
+	void SetResRange
+	( float* pfResRange // ex: [30A, 4A]
 	);
 	void SetBFactor(float fBFactor);
 	void DoIt
@@ -521,7 +514,7 @@ private:
 	CCTFParam* m_pCtfParam;
 	GCC1D* m_pGCC1D;
 	GCalcCTF1D m_aGCalcCTF1D;
-	float m_afFreqRange[2];
+	float m_afResRange[2];   // ex: [30A, 4A]
 	float m_afDfRange[2];    // f0, delta in angstrom
 	float m_afPhaseRange[2]; // p0, delta in degree
 	float* m_gfRadialAvg;
@@ -536,9 +529,14 @@ public:
 	CFindDefocus2D(void);
 	~CFindDefocus2D(void);
 	void Clean(void);
-	void Setup(CCTFParam* pCtfParam, int* piCmpSize);
-	void SetResRange(float afResRange[2]); // angstrom
-	void SetBFactor(float fBFactor);
+	void Setup
+	( CCTFParam* pCtfParam, 
+	  float* pfResRange,
+	  int* piCmpSize
+	);
+	void SetBFactor
+	( float fBFactor
+	);
 	void SetInitVals
 	( float fDfMean, 
 	  float fAstRatio, 
