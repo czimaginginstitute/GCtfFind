@@ -34,6 +34,7 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GCC2D.cu \
 	 ./FindCTF/GAstRatio.cu \
 	 ./FindCTF/GAstAngle.cu \
+	 ./FindCTF/GDetectIce1D.cu \
 	 ./FindCTF/GLowpass2D.cu
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
@@ -54,6 +55,7 @@ SRCS = ./CInput.cpp \
 	./MrcUtil/CAsyncSingleSave.cpp \
 	./FindCTF/CFindCtfHelp.cpp \
 	./FindCTF/CCTFTheory.cpp \
+	./FindCTF/CFitParam.cpp \
 	./FindCTF/CRescaleImage.cpp \
 	./FindCTF/CGenAvgSpectrum.cpp \
 	./FindCTF/CEmbedCTF.cpp \

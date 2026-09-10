@@ -32,7 +32,7 @@ void CEmbedCTF::DoIt
 	//---------------------------
 	float fPixelSize = pCTFTheory->GetPixelSize();
 	float fMinFreq = fPixelSize / pfResRange[0];
-	float fMaxFreq = 0.45f;
+	float fMaxFreq = 0.48f;
 	float fGain = fStd * 1.5f;
 	//---------------------------
 	int aiCmpSize[] = {piSpectSize[0] / 2 + 1, piSpectSize[1]};

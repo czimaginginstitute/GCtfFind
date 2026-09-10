@@ -71,7 +71,6 @@ static __global__ void mGCalculate
 
 GCC1D::GCC1D(void)
 {
-	m_fBFactor = 1.0f;
 	m_gfRes = 0L;
 }
 
@@ -82,20 +81,17 @@ GCC1D::~GCC1D(void)
 
 void GCC1D::SetResRange
 (	float* pfResRange, // [low, high] (A)
-	float fPixSize,    // angstrom
-	float fBFactor
+	float fPixSize     // angstrom
 )
 {	float afResRange[2] = {0.0f};
 	afResRange[0] = fPixSize / pfResRange[0];
 	afResRange[1] = fPixSize / pfResRange[1];
 	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
 	//---------------------------
-	float afIceRange[2] = {0.0f};
-	afIceRange[0] = fPixSize / 3.9f;
-	afIceRange[1] = fPixSize / 3.4;
+	float afIceRange[] = {1.0f, 2.0f};
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->GetIceRange(afIceRange);
 	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
-	//---------------------------
-	m_fBFactor = fBFactor;
 }
 
 void GCC1D::SetSize(int iSize)
@@ -111,18 +107,21 @@ float GCC1D::DoIt(float* gfCTF, float* gfSpectrum)
 	dim3 aBlockDim(256, 1);
 	dim3 aGridDim(1, 1);
 	aGridDim.x = (m_iSize + aBlockDim.x - 1) / aBlockDim.x;
-	//-----------------------------------------------------
+	//---------------------------
 	size_t tBytes = sizeof(float) * aGridDim.x * 3;
 	cudaMemset(m_gfRes, 0, tBytes);
-	//----------------------------
+	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
 	tBytes = sizeof(float) * aBlockDim.x * 3;
-	mGCalculate<<<aGridDim, aBlockDim, tBytes>>>(gfCTF, gfSpectrum, 
-	   m_iSize, m_fBFactor, m_gfRes);
-     	//-----------------------------------------------
+	mGCalculate<<<aGridDim, aBlockDim, tBytes>>>(
+	   gfCTF, gfSpectrum, m_iSize, 
+	   pFitParam->m_fBFactor, 
+	   m_gfRes);
+	//---------------------------
 	float* pfRes = new float[aGridDim.x * 3];
 	tBytes = sizeof(float) * aGridDim.x * 3;
 	cudaMemcpy(pfRes, m_gfRes, tBytes, cudaMemcpyDefault);
-	//----------------------------------------------------
+	//---------------------------
 	double dCC = 0.0, dStd1 = 0.0, dStd2 = 0.0;
 	for(int i=0; i<aGridDim.x; i++)
 	{	int j = 3 * i;

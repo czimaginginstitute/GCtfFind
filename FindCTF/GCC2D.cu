@@ -123,9 +123,9 @@ void GCC2D::SetResRange
 	afResRange[1] = fPixSize / pfResRange[1];
 	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
 	//---------------------------
-	float afIceRange[2] = {0.0f};
-	afIceRange[0] = fPixSize / 3.52f;
-	afIceRange[1] = fPixSize / 3.48f;
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	float afIceRange[] = {1.0f, 2.0f};
+	pFitParam->GetIceRange(afIceRange);
 	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
 }
 
@@ -154,24 +154,23 @@ void GCC2D::SetSize(int* piCmpSize)
 
 float GCC2D::DoIt
 (	float* gfCTF, 
-	float* gfSpectrum,
-	float fBFactor
+	float* gfSpectrum
 )
 {	dim3 aBlockDim(m_iBlockDimX, 1);
 	dim3 aGridDim(m_iGridDimX, 1);
 	size_t tSmBytes = sizeof(float) * aBlockDim.x * 3;
-	//------------------------------------------------
+	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
 	mGCalc2D<<<aGridDim, aBlockDim, tSmBytes>>>(
-	   gfCTF, 
-	   gfSpectrum, 
-	   fBFactor, 
+	   gfCTF, gfSpectrum, 
+	   pFitParam->m_fBFactor, 
 	   m_gfRes);
-        //-------------------------------------------------------
+        //---------------------------
 	aBlockDim.x = aGridDim.x; aBlockDim.y = 1;
 	aGridDim.x = 1; aGridDim.y = 1;
 	tSmBytes = sizeof(float) * aBlockDim.x * 3;
 	mGCalc1D<<<aGridDim, aBlockDim, tSmBytes>>>(m_gfRes);
-	//---------------------------------------------------
+	//---------------------------
 	float fCC = 0.0f;
 	cudaMemcpy(&fCC, m_gfRes, sizeof(float), cudaMemcpyDefault);
 	return fCC;

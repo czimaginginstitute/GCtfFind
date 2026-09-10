@@ -139,6 +139,9 @@ void CFindSeriesCtfs::mSetupFindCtf(void)
            pInput->m_fAmpContrast, pRescaleImg->m_fPixSizeN,
            100.0f, fExtPhase);
 	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->m_fPixSize = pRescaleImg->m_fPixSizeN;
+	//---------------------------
         pFindCtf2D->Setup1(&aInputCtf);
 	pFindCtf2D->Setup2(pRescaleImg->m_aiNewSize);
 	pFindCtf2D->GenHalfSpectrum(pRescaleImg->GetScaledImg());

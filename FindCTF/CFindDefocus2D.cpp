@@ -90,11 +90,6 @@ void CFindDefocus2D::Setup
 	   m_pCtfParam->m_fPixelSize);
 }
 
-void CFindDefocus2D::SetBFactor(float fBFactor)
-{
-	m_fBFactor = fBFactor;
-}
-
 //--------------------------------------------------------------------
 // 1. DoIt() should be called after CFindDefocus1D::DoIt(), which
 //    generates an estimate of m_fDfMean.
@@ -252,7 +247,7 @@ float CFindDefocus2D::mCorrelate(void)
 	//---------------------------
 	m_aGCalcCtf2D.DoIt(fDfMin, fDfMax, fAstRad, fExtPhaseRad, 
 	   m_gfCtf2D, m_aiCmpSize);
-	float fCC = m_pGCC2D->DoIt(m_gfCtf2D, m_gfSpect, m_fBFactor);
+	float fCC = m_pGCC2D->DoIt(m_gfCtf2D, m_gfSpect);
 	return fCC;
 }
 

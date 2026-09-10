@@ -113,9 +113,9 @@ void GEstBFactor1D::Setup
 	afResRange[1] = pfResRange[1];
 	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
 	//---------------------------
-	float afIceRange[2] = {0.0f};
-        afIceRange[0] = fPixSize / 3.9f;
-	afIceRange[1] = fPixSize / 3.4;
+	float afIceRange[2] = {1.0f, 2.0f};
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->GetIceRange(afIceRange);
 	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
 	//---------------------------
 	if(iNumSteps > m_iNumSteps) mClean();
@@ -149,7 +149,7 @@ float GEstBFactor1D::DoIt(float* gfSpectrum, int iSize)
 		fBestB = i * m_fBStep;
 	}
 	if(pfRes != 0L) delete[] pfRes;
-	//----------------------------
+	//---------------------------
 	return fBestB;
 }
 

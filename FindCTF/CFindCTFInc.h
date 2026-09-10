@@ -4,7 +4,6 @@
 
 namespace GCTFFind
 {
-
 class CCTFParam
 {
 public:
@@ -95,6 +94,25 @@ private:
 	CCTFParam* m_pCTFParam;
 	float m_fPI;
 };
+
+class CFitParam
+{
+public:
+	static CFitParam* GetInstance(void);
+	static void DeleteInstance(void);
+	~CFitParam(void);
+	void GetIceRange(float* pfIceRange);
+	//---------------------------
+	float m_fPixSize;
+	float m_afResRange[2];
+	float m_fBFactor;
+	bool m_bIceRing1;
+	bool m_bIceRing2;
+private:
+	CFitParam(void);
+	static CFitParam* m_pInstance;
+};
+
 
 class GCalcCTF1D
 {
@@ -314,8 +332,7 @@ public:
 	void SetSize(int* piCmpSize); // half spectrum
 	float DoIt
 	( float* gfCTF, 
-	  float* gfSpectrum,
-	  float fBFactor
+	  float* gfSpectrum
 	);
 private:
 	int m_aiCmpSize[2];
@@ -332,8 +349,7 @@ public:
 	void SetSize(int iSize);
 	void SetResRange
 	( float* pfResRange, // [low, high] in A
-	  float fPixSize,    // in A
-	  float fBFactor
+	  float fPixSize     // in A
 	);
 	float DoIt
 	( float* gfCTF, 
@@ -347,7 +363,6 @@ public:
 private:
 	int m_iSize;
 	float* m_gfRes;
-	float m_fBFactor;
 };
 
 class GAstRatio
@@ -431,6 +446,23 @@ public:
 	);
 };
 
+class GDetectIce1D
+{
+public:
+	GDetectIce1D(void);
+	~GDetectIce1D(void);
+	void DoIt
+	( float* gfSpect,
+	  int iSize,
+	  float fPixSize  // angstrom
+	);
+	//---------------------------
+	bool m_bIceRing1;
+	bool m_bIceRing2;
+private:
+	float mCalcAmp(float* gfSpect, int iSize, float* pfRingRange);
+};
+
 class CCalcBackground
 {
 public:
@@ -495,7 +527,6 @@ public:
 	void SetResRange
 	( float* pfResRange // ex: [30A, 4A]
 	);
-	void SetBFactor(float fBFactor);
 	void DoIt
 	( float afDfRange[2],    // f0, delta angstrom
 	  float afPhaseRange[2], // p0, delta degree
@@ -520,7 +551,6 @@ private:
 	float* m_gfRadialAvg;
 	int m_iCmpSize;
 	float* m_gfCtf1D;
-	float m_fBFactor;
 };
 
 class CFindDefocus2D 
@@ -533,9 +563,6 @@ public:
 	( CCTFParam* pCtfParam, 
 	  float* pfResRange,
 	  int* piCmpSize
-	);
-	void SetBFactor
-	( float fBFactor
 	);
 	void SetInitVals
 	( float fDfMean, 
@@ -589,7 +616,6 @@ private:
 	GCC2D* m_pGCC2D;
 	GCalcCTF2D m_aGCalcCtf2D;
 	CCTFParam* m_pCtfParam;
-	float m_fBFactor;
 	//-------------------------------------------
 	// 1) [DfMean, AstRatio, AstAngle, ExtPhase, 
 	//    CtfScore, CtfRes]
@@ -637,7 +663,6 @@ protected:
 	int m_aiCmpSize[2];
 	int m_aiImgSize[2];
 	float m_afResRange[2];
-	float m_fBFactor;
 };
 
 class CFindCtf1D : public CFindCtfBase
@@ -651,8 +676,11 @@ public:
 	void Refine1D(float fInitDf, float fDfRange);
 protected:
 	void mEstimateBFactor(void);
+	void mFindIceRings(void);
+	//---------------------------
 	void mFindDefocus(void);
 	void mRefineDefocus(float fDfRange);
+	//---------------------------
 	void mCalcRadialAverage(void);
 	CFindDefocus1D* m_pFindDefocus1D;
 	float* m_gfRadialAvg;

@@ -51,7 +51,7 @@ void CRescaleImage::Setup(int* piRawSize, float fRawPixSize)
 	m_fRawPixSize = fRawPixSize;
 	//---------------------------
 	m_fBinning = 1.2f / fRawPixSize;
-	if(m_fBinning <= 1) m_fBinning = 1.0f;
+	if(m_fBinning <= 1.05) m_fBinning = 1.05f;
 	m_fPixSizeN = m_fRawPixSize * m_fBinning;
 	//---------------------------
 	m_aiNewSize[0] = (int)(m_aiRawSize[0] / m_fBinning + 0.5f);

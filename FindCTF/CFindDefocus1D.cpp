@@ -14,7 +14,6 @@ CFindDefocus1D::CFindDefocus1D(void)
 {
 	m_gfCtf1D = 0L;
 	m_pGCC1D = 0L;
-	m_fBFactor = 4.0f;
 }
 
 CFindDefocus1D::~CFindDefocus1D(void)
@@ -58,11 +57,6 @@ void CFindDefocus1D::SetResRange(float* pfResRange)
 	m_afResRange[1] = pfResRange[1];	
 }
 
-void CFindDefocus1D::SetBFactor(float fBFactor)
-{
-	m_fBFactor = fBFactor;
-}
-
 void CFindDefocus1D::DoIt
 (	float afDfRange[2],
 	float afPhaseRange[2],
@@ -73,8 +67,7 @@ void CFindDefocus1D::DoIt
 	m_gfRadialAvg = gfRadialAvg;
 	//--------------------------
 	m_pGCC1D->SetResRange(m_afResRange, 
-	   m_pCtfParam->m_fPixelSize,
-	   m_fBFactor);
+	   m_pCtfParam->m_fPixelSize);
 	//--------------------------
 	m_fMaxCC = (float)-1e20;
 	float afResult[3] = {0.0f};

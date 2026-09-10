@@ -212,3 +212,11 @@ Changes:
 5. Added makefile13
 6. Revised GSpectralCC2D.cu for the determination of the Thon ring resolution.
 
+Version 1.2.5 [09-08-2026]
+General:
+1. Detect whether there are ice rings in micrographs.
+Changes:
+1. FindCTF/GDetectIce1D.cu: Detect ice ring band in 1D radial average.
+2. Modified GEstBFactor1D.cu, GCC1D.cu, GCC2D.cu to exclude ice ring bands
+3. FindCTF/CFitParam.cpp: Buffer the parameters needed CTF fitting.
+Bugs:
