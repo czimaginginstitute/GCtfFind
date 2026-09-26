@@ -40,6 +40,22 @@ CCTFParam* CCTFParam::GetCopy(void)
 	return pCopy;
 }
 
+//--------------------------------------------------------------------
+// 1. Estimate the location of the first zero by ignoring the Cs.
+// 2. The returned value is Fourier pixel (1/real-pixel).
+//--------------------------------------------------------------------
+float CCTFParam::EstFirstZero(float fDfMin, float fDfMax, float fExtPhase)
+{
+	float fS0 = 0.0f;
+	float fPI = 3.1415926f;
+	float fDefocus = (fDfMin + fDfMax) * 0.5f;
+	float s2 = (fPI - m_fAmpPhaseShift - fExtPhase) /
+	   (fPI * m_fWavelength * fDefocus);
+	if(s2 < 0) fS0 = 0.0f;
+	else fS0 = (float)sqrtf(s2);
+	return fS0;
+}
+
 void CCTFParam::ChangePixelSize(float fNewPixSize)
 {
 	float fScale = (m_fPixelSize / fNewPixSize);

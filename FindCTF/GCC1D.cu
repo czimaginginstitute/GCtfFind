@@ -7,6 +7,9 @@
 
 using namespace GCTFFind;
 
+static __constant__ float c_afResRange[2];  // res/pix_size
+static __constant__ float c_afIceRange[2];  // res/pix_size
+
 //-----------------------------------------------------------------------------
 // 1. The zero-frequency component is at (x=0, y=iCmpY/2). The frequency
 //    range in y direction is [-CmpY/2, CmpY/2).
@@ -16,8 +19,6 @@ static __global__ void mGCalculate
 (	float* gfCTF,
 	float* gfSpectrum,
 	int iSize,
-	float fFreqLow,
-	float fFreqHigh,
 	float fBFactor,
 	float* gfRes
 )
@@ -29,15 +30,19 @@ static __global__ void mGCalculate
 	s_gfStd1[threadIdx.x] = 0.0f;
 	s_gfStd2[threadIdx.x] = 0.0f;
 	__syncthreads();
-	//--------------
+	//---------------------------
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	if(x >= iSize) return;
-	//--------------------
-	if(x >= fFreqLow && x < fFreqHigh)
-	{	float fCTF = x / (iSize - 1.0f);
-		float fSpec = gfSpectrum[x]; 
-		fCTF = (fabsf(gfCTF[x]) - 0.5f) 
-		   * expf(-fBFactor * fCTF * fCTF);
+	//---------------------------
+	float fX = x / ((iSize - 1.0f) * 2.0f);
+	bool bNotIce = (fX < c_afIceRange[0] || fX > c_afIceRange[1]);
+	//---------------------------
+	if(fX >= c_afResRange[0] && bNotIce)
+	{	float fX = x / ((iSize - 1.0f) * 2.0f);
+		float fW = expf(-fBFactor * fX * fX);
+		float fSpec = gfSpectrum[x];
+		float fCTF = (fabsf(gfCTF[x]) - 0.5f) * fW;
+		//-------------------
 		s_gfCC[threadIdx.x] = fCTF * fSpec;
 		s_gfStd1[threadIdx.x] = fCTF * fCTF;
 		s_gfStd2[threadIdx.x] = fSpec * fSpec;
@@ -66,7 +71,6 @@ static __global__ void mGCalculate
 
 GCC1D::GCC1D(void)
 {
-	m_fBFactor = 1.0f;
 	m_gfRes = 0L;
 }
 
@@ -75,14 +79,19 @@ GCC1D::~GCC1D(void)
 	if(m_gfRes != 0L) cudaFree(m_gfRes);
 }
 
-void GCC1D::Setup
-(	float fFreqLow,  // pixel in Fourier domain
-	float fFreqHigh, // pixel in Fourier domain
-	float fBFactor
+void GCC1D::SetResRange
+(	float* pfResRange, // [low, high] (A)
+	float fPixSize     // angstrom
 )
-{	m_fFreqLow = fFreqLow;
-	m_fFreqHigh = fFreqHigh;
-	m_fBFactor = fBFactor;
+{	float afResRange[2] = {0.0f};
+	afResRange[0] = fPixSize / pfResRange[0];
+	afResRange[1] = fPixSize / pfResRange[1];
+	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
+	//---------------------------
+	float afIceRange[] = {1.0f, 2.0f};
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->GetIceRange(afIceRange);
+	cudaMemcpyToSymbol(c_afIceRange, afIceRange, sizeof(float) * 2);
 }
 
 void GCC1D::SetSize(int iSize)
@@ -98,18 +107,21 @@ float GCC1D::DoIt(float* gfCTF, float* gfSpectrum)
 	dim3 aBlockDim(256, 1);
 	dim3 aGridDim(1, 1);
 	aGridDim.x = (m_iSize + aBlockDim.x - 1) / aBlockDim.x;
-	//-----------------------------------------------------
+	//---------------------------
 	size_t tBytes = sizeof(float) * aGridDim.x * 3;
 	cudaMemset(m_gfRes, 0, tBytes);
-	//----------------------------
+	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
 	tBytes = sizeof(float) * aBlockDim.x * 3;
-	mGCalculate<<<aGridDim, aBlockDim, tBytes>>>(gfCTF, gfSpectrum, 
-	   m_iSize, m_fFreqLow, m_fFreqHigh, m_fBFactor, m_gfRes);
-     	//-----------------------------------------------
+	mGCalculate<<<aGridDim, aBlockDim, tBytes>>>(
+	   gfCTF, gfSpectrum, m_iSize, 
+	   pFitParam->m_fBFactor, 
+	   m_gfRes);
+	//---------------------------
 	float* pfRes = new float[aGridDim.x * 3];
 	tBytes = sizeof(float) * aGridDim.x * 3;
 	cudaMemcpy(pfRes, m_gfRes, tBytes, cudaMemcpyDefault);
-	//----------------------------------------------------
+	//---------------------------
 	double dCC = 0.0, dStd1 = 0.0, dStd2 = 0.0;
 	for(int i=0; i<aGridDim.x; i++)
 	{	int j = 3 * i;
@@ -124,6 +136,7 @@ float GCC1D::DoIt(float* gfCTF, float* gfSpectrum)
 	return (float)dCC;
 }
 
+/*
 float GCC1D::DoCPU
 (	float* gfCTF,
 	float* gfSpectrum,
@@ -150,3 +163,4 @@ float GCC1D::DoCPU
 	delete[] pfSpectrum;
 	return (float)dCC;
 }
+*/

@@ -10,22 +10,35 @@ class CSimpleFuncs
 {
 public:
 	static void CheckCudaError(const char* pcLocation);
+	//---------------------------
+	static float* GAllocFloat(int* piSize);
+	static float* GAllocFloat(int iSize);
+	//---------------------------
+	static cufftComplex* GAllocCmp(int* piSize);
+	static cufftComplex* GAllocCmp(int iSize);
+	//---------------------------
+	static void ReplaceSuffix
+	( const char* pcFileName,
+	  const char* pcOldSuffix,
+	  const char* pcNewSuffix,
+	  char* pcNewFileName
+	);
 };	// CSimpleFunc
 
 class CParseArgs
 {
 public:
         CParseArgs(void);
-        ~CParseArgs(void);
-        void Set(int argc, char* argv[]);
-        bool FindVals(const char* pcTag, int aiRange[2]);
-        void GetVals(int aiRange[2], float* pfVals);
-        void GetVals(int aiRange[2], int* piVal);
-        void GetVal(int iArg, char* pcVal);
-        void GetVals(int aiRange[2], char** ppcVals);
+	~CParseArgs(void);
+	void Set(int argc, char* argv[]);
+	bool FindVals(const char* pcTag, int aiRange[2], int iNumVals);
+	void GetVals(int aiRange[2], float* pfVals);
+	void GetVals(int aiRange[2], int* piVal);
+	void GetVal(int iArg, char* pcVal);
+	void GetVals(int aiRange[2], char** ppcVals);
 private:
-        char** m_argv;
-        int m_argc;
+	char** m_argv;
+	int m_argc;
 };
 
 class GAddImages
@@ -41,6 +54,92 @@ public:
 	   float* gfSum,
 	   int* piImgSize
 	);
+};
+
+class GCalcMeanStd
+{
+public:
+	GCalcMeanStd(void);
+	~GCalcMeanStd(void);
+	float DoMean(float* gfImg, int* piImgSize, bool bPadded);
+	float DoStd(float* pfImg, int* piImgSize, bool bPadded);
+	//---------------------------
+	float m_fMean;
+	float m_fStd;
+};
+
+class GFFT1D
+{
+public:
+	GFFT1D(void);
+	~GFFT1D(void);
+	void DestroyPlan(void);
+	void CreatePlan
+	( int iFFTSize,
+	  int iNumLines,
+	  bool bForward
+	);
+	void Forward
+	( float* gfPadLines,
+	  bool bNorm
+	);
+	void Inverse
+	( cufftComplex* gCmpLines
+	);
+private:
+        int m_iFFTSize;
+	int m_iNumLines;
+	cufftType m_cufftType;
+	cufftHandle m_cufftPlan;
+};
+
+class GFFT2D
+{
+public:
+	GFFT2D(void);
+	~GFFT2D(void);
+	void SetStream(cudaStream_t stream);
+	void DestroyPlan(void);
+	void CreatePlan(int* piFFTSize, bool bForward);
+	void Forward(float* gfPadImg, bool bNorm);
+	void Forward(float* gfImg, cufftComplex* gCmp, bool bNorm);
+	void Inverse(cufftComplex* gCmp);
+	void Inverse(cufftComplex* gCmp, float* gfImg);
+	void RemoveAmp(cufftComplex* gCmp, int* piCmpSize);
+private:
+	void mNormalize(cufftComplex* gCmpImg);
+	void mCheckError(cufftResult error, const char* pcFunc);
+	int m_aiFFTSize[2];
+	cufftType m_cufftType;
+	cufftHandle m_cufftPlan;
+	cudaStream_t m_aStream;
+};
+
+class GRoundEdge2D
+{
+public:
+	GRoundEdge2D(void);
+	~GRoundEdge2D(void);
+	void SetMask(float fSizeX, float fSizeY);
+	void DoIt(float* gfImg, int* piSize, bool bPadded, float fBFactor);
+private:
+	float m_afMaskSize[2];
+};
+
+class GCalcCC2D
+{
+public:
+	GCalcCC2D(void);
+	~GCalcCC2D(void);
+	float DoIt
+	( float* gfImg1,
+	  float* gfImg2,
+	  int* piImgSize,
+	  bool bPadded
+	);
+	float m_fCC;
+	float m_afMeanStd1[2];
+	float m_afMeanStd2[2];
 };
 
 class GCalcMoment2D
@@ -79,6 +178,37 @@ public:
 	~GThreshold2D(void);
 	void DoIt(float* gfImg, float fMin, float fMax,
 	   int* piImgSize, bool bPadded);
+};
+
+class GRealResize2D
+{
+public:
+	GRealResize2D(void);
+	~GRealResize2D(void);
+	static void GetNewSize
+	( int* piInSize,
+	  bool bInPadded,
+	  float fBin,
+	  int* piOutSize,
+	  bool bOutPadded
+	);
+	static float GetBinning
+	( int* piInSize,
+	  bool bInPadded,
+	  int* piOutSize,
+	  bool bOutPadded
+	);
+	void DoIt
+	( float* gfInImg,
+	  int* piInSize,
+	  bool bInPadded,
+	  float* gfOutImg,
+	  int* piOutSize,
+	  bool bOutPadded,
+	  bool bSum,
+	  cudaStream_t stream
+	);
+	float m_fBin;
 };
 
 class GFtResize2D
@@ -159,6 +289,66 @@ private:
         int m_iFFTy;
 };
 
+class CPad2D
+{
+public:
+        
+	CPad2D(void);
+	~CPad2D(void);
+	void Pad(float* pfImg, int* piImgSize, float* pfPad);
+	void Unpad(float* pfPadImg, int* piPadSize, float* pfImg);
+	void GetPadSize(int* piImgSize, int* piPadSize);
+	void GetImgSize(int* piPadSize, int* piImgSize);
+	void GetCmpSize(int* piImgSize, int* piCmpSize);
+};
+
+class CPowell
+{
+public:
+	CPowell(void);
+	virtual ~CPowell(void);
+	//---------------------------
+	virtual float Eval  // must be overriden
+	( float* pfPoint
+	);
+	//---------------------------
+	void Clean(void);
+	void Setup(int iDim, int iIterations, float fTol);
+	float DoIt
+	( float* pfInitPoint,
+	  float* pfSearchRange,
+	  int iNumSteps
+	);
+	//---------------------------
+	int m_iDim;
+	float* m_pfInitPoint;
+	float* m_pfBestPoint;
+	float m_fInitVal;
+	float m_fBestVal;
+private:
+	float mDoIt(void);
+	float mLineMinimize(float* pfPoint, float* pfVector);
+	void mCalcNewPoint
+	( float* pfOldPoint,
+	  float* pfVector,
+	  float fStride,
+	  float* pfNewPoint
+	);
+	void mNormVector(float* pfVector);
+	void mFindAllowableRange
+	( float* pfStartPoint,
+	  float* pfVector,
+	  float* pfRange
+	);
+	int m_iIterations;
+	int m_iNumSteps;
+	float m_fTol;
+	float* m_pfPointMin;
+	float* m_pfPointMax;
+	float* m_pfVectors;
+	float m_fTiny;
+};
+
 class CRegSpline
 {
 public:
@@ -222,6 +412,7 @@ public:
         void GDoIt(float* gfImg, int* piSize);
         void GDoIt(unsigned char* gucImg, int* piSize);
         void DoIt(void* pvImg, int iMode, int* piSize);
+	void DoStack(float** ppfImgs, int* piImgSize, int iNumImgs);
 private:
         char m_acMrcFile[256];
 };	//CSaveTempMrc

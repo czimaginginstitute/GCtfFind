@@ -53,7 +53,7 @@ static __global__ void mGCalc2D
 			if(fR < iLow || fR >= iHigh) continue;
 			//---------------
 			int i = y * iSpectX + x;
-			float fC = gfCTF2D[i];
+			float fC = fabsf(gfCTF2D[i]) - 0.5f;
 			float fS = gfSpect[i];
 			fSumMeanC += fC;
 			fSumMeanS += fS;
@@ -148,26 +148,55 @@ int GSpectralCC2D::DoIt
 {	dim3 aBlockDim(1, 512);
 	dim3 aGridDim(m_aiSpectSize[0], 1);
 	size_t tSmBytes = sizeof(float) * aBlockDim.y * 6;
-	//-----------------
+	//---------------------------
 	mGCalc2D<<<aGridDim, aBlockDim, tSmBytes>>>(gfCTF, gfSpect, 
 	   m_aiSpectSize[0], m_aiSpectSize[1], 10, m_gfCC);
 	cudaMemcpy(m_pfCC, m_gfCC, m_aiSpectSize[0] * sizeof(float),
 	   cudaMemcpyDefault);
-        //-----------------
-	int iMax = 1;
-	float fMax = (float)-1e30;
-	for(int i=1; i<m_aiSpectSize[0]; i++)
-	{	if(m_pfCC[i] <= fMax) continue;
-		fMax = m_pfCC[i];
-		iMax = i;
+	//---------------------------
+	int iShell0143 = mFindShell0143(m_pfCC, m_aiSpectSize[0]);
+	if(iShell0143 < 0) iShell0143 = 1;
+	return iShell0143;
+}
+
+int GSpectralCC2D::mFindShell0143(float* pfCC, int iSize)
+{
+	float fMaxCC = (float)-1e20;
+	int iMaxCC = -1;
+	for(int i=0; i<iSize; i++)
+	{	if(pfCC[i] > fMaxCC)
+		{	fMaxCC = pfCC[i];
+			iMaxCC = i;
+		}
 	}
-	if(fMax < 0.143f) return iMax;
-	//-----------------
-	int iShell = iMax;
-	for(int i=iMax; i<m_aiSpectSize[0]; i++)
-	{	if(m_pfCC[i] < 0.143f) break;
-		iShell = i;
+	//---------------------------
+	float fMinCC = (float)1e20;
+	int iMinCC = -1;
+	for(int i=iMaxCC; i<iSize; i++)
+	{	if(pfCC[i] < fMinCC)
+		{	fMinCC = pfCC[i];
+			iMinCC = i;
+		}
 	}
-	return iShell;
+	if(fMinCC > 0.143f) return iMinCC;
+	//---------------------------
+	fMinCC = (0.143f + fMinCC) * 0.5f;
+	int iHitShell = iMinCC;
+	for(int i=iMinCC; i>iMaxCC; i--)
+	{	if(pfCC[i] > 0.143f) continue;
+		else if(pfCC[i] < fMinCC) continue;
+		//-------------------
+		iHitShell = i;
+		break;
+	}
+	//---------------------------
+	int iShell0143 = iHitShell;
+	for(int i=iHitShell; i>=iMaxCC; i--)
+	{	if(pfCC[i] >= 0.143f)
+		{	iShell0143 = i;
+			break;
+		}
+	}
+	return iShell0143;
 }
 

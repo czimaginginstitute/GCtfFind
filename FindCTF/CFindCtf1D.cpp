@@ -47,15 +47,27 @@ void CFindCtf1D::Setup1(CCTFTheory* pCtfTheory)
 }
 
 void CFindCtf1D::Do1D(void)
-{	
+{
+	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();
+	bool bCentVal = true;
+	m_fDfMin = pSeaRanges->GetDefocus(bCentVal);
+	m_fDfMax = m_fDfMin;
+	m_fExtPhase = pSeaRanges->GetExtPhase(bCentVal);
+	m_fScore = 0.0f;
+	if(!pSeaRanges->bDefocus()) return;
+	//---------------------------
 	mCalcRadialAverage();
+	mEstimateBFactor();
+	mFindIceRings();
 	mFindDefocus();
 	//---------------------------
 	float fDfRange = fmaxf(0.3f * m_fDfMin, 3000.0f); 
 	mRefineDefocus(fDfRange);
 	//---------------------------
-	printf("1D estimate: %8.2f  %8.2f  %8.2f\n\n",
-	   m_fDfMin, m_fExtPhase, m_fScore);	
+	printf("1D estimattion:\n"
+           " Defocus    ext_phase   score\n"
+	   " %8.2f  %8.2f  %8.2f\n\n",
+	   m_fDfMin, m_fExtPhase, m_fScore);
 }
 
 void CFindCtf1D::Refine1D(float fInitDf, float fDfRange)
@@ -63,26 +75,67 @@ void CFindCtf1D::Refine1D(float fInitDf, float fDfRange)
 	m_fDfMin = fInitDf;
 	m_fDfMax = fInitDf;
 	m_fScore = (float)-1e20;
-	//----------------------
+	//---------------------------
 	mCalcRadialAverage();
+	mEstimateBFactor();
+	mFindIceRings();
 	mRefineDefocus(fDfRange);
-	printf("1D estimate: %8.2f  %8.2f  %8.2f\n\n",
+	//---------------------------
+	printf("1D estimattion:\n   " 
+	   "Defocus    ext_phase   score\n"
+	   "%8.2f  %8.2f  %8.2f\n\n",
 	   m_fDfMin, m_fExtPhase, m_fScore);
+}
+
+void CFindCtf1D::mEstimateBFactor(void)
+{
+	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
+	GEstBFactor1D estBFactor;
+	//---------------------------
+	float fL = m_aiCmpSize[1] * pCtfParam->m_fPixelSize;
+	float fMinFreq = fL / m_afResRange[0];
+	float fMaxFreq = fL / m_afResRange[1];
+	//---------------------------
+	float fBStep = 2.0f;
+	int iNumSteps = 100;
+	//---------------------------
+        estBFactor.Setup(m_afResRange, 
+	   pCtfParam->m_fPixelSize,
+	   fBStep, iNumSteps);
+	float fBestB = estBFactor.DoIt(
+	   m_gfRadialAvg, 
+	   m_aiCmpSize[0]);
+	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->m_fBFactor = fBestB;
+}
+
+void CFindCtf1D::mFindIceRings(void)
+{
+	GDetectIce1D detectIce1D;
+	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
+	detectIce1D.DoIt(
+	   m_gfRadialAvg, 
+	   m_aiCmpSize[0],
+	   pCtfParam->m_fPixelSize);
+	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->m_bIceRing1 = detectIce1D.m_bIceRing1;
+	pFitParam->m_bIceRing2 = detectIce1D.m_bIceRing2;	
 }
 
 void CFindCtf1D::mFindDefocus(void)
 {
-	m_pFindDefocus1D->SetResRange(m_afResRange);
-	float fPixSize2 = m_fPixSize * m_fPixSize;
+	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();
 	float afDfRange[2] = {0.0f};
-	afDfRange[0] = 3000.0f * fPixSize2;
-	afDfRange[1] = 30000.0f * fPixSize2;
-	//----------------------------------
 	float afPhaseRange[2] = {0.0f};
-	afPhaseRange[0] = fmax(m_fExtPhase - m_fPhaseRange / 2, 0.0f);
-	afPhaseRange[1] = fmin(afPhaseRange[0] + m_fPhaseRange, 150.0f);
-	//------------------------------
+	pSeaRanges->GetDefocus(afDfRange);
+	pSeaRanges->GetExtPhase(afPhaseRange);
+	//---------------------------
+	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
+	m_pFindDefocus1D->SetResRange(m_afResRange);
 	m_pFindDefocus1D->DoIt(afDfRange, afPhaseRange, m_gfRadialAvg);
+	//---------------------------
 	m_fExtPhase = m_pFindDefocus1D->m_fBestPhase;
 	m_fDfMin = m_pFindDefocus1D->m_fBestDf;
 	m_fDfMax = m_fDfMin;
@@ -91,19 +144,25 @@ void CFindCtf1D::mFindDefocus(void)
 
 void CFindCtf1D::mRefineDefocus(float fDfRange)
 {
-	m_pFindDefocus1D->SetResRange(m_afResRange);
-	float fPixSize2 = m_fPixSize * m_fPixSize;
+	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();
 	float afDfRange[2] = {0.0f};
-	float fMinDf = 3000.0f * m_fPixSize * m_fPixSize;
-	afDfRange[0] = fmaxf(m_fDfMin - fDfRange / 2, fMinDf);
-	afDfRange[1] = afDfRange[0] + fDfRange;
-	//----------------------
+	bool bCentVal = false;
+	float fRange = pSeaRanges->GetDefocus(bCentVal) * 0.25f;
+	afDfRange[0] = m_fDfMin - fRange;
+	afDfRange[1] = m_fDfMin + fRange;
+	pSeaRanges->CheckDefocus(afDfRange);
+	//---------------------------
 	float afPhaseRange[2] = {0.0f};
-	float fPhaseRange = 0.2f * m_fPhaseRange;
-	afPhaseRange[0] = fmax(m_fExtPhase - fPhaseRange / 2, 0.0f);
-	afPhaseRange[1] = fmin(afPhaseRange[1] + fPhaseRange, 150.0f);
-	//-----------------------------------------------------
-	m_pFindDefocus1D->DoIt(afDfRange, afPhaseRange, m_gfRadialAvg);
+	fRange = pSeaRanges->GetExtPhase(bCentVal) * 0.25f;	
+	afPhaseRange[0] = m_fExtPhase - fRange;
+	afPhaseRange[1] = afPhaseRange[0] + fRange;
+	pSeaRanges->CheckExtPhase(afPhaseRange);
+	//---------------------------
+	m_pFindDefocus1D->DoIt(
+	   afDfRange, 
+	   afPhaseRange, 
+	   m_gfRadialAvg);
+	//---------------------------
 	m_fExtPhase = m_pFindDefocus1D->m_fBestPhase;
 	m_fDfMin = m_pFindDefocus1D->m_fBestDf;
 	m_fDfMax = m_fDfMin;

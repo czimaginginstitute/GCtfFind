@@ -16,6 +16,7 @@ CProcessMain::~CProcessMain(void)
 bool CProcessMain::DoIt(void)
 {
 	CInput* pInput = CInput::GetInstance();
+	CSearchRanges* pSeaRanges = CSearchRanges::GetInstance();
 	CInputFolder* pInputFolder = CInputFolder::GetInstance();
 	CLoadAngFile* pLoadAngFile = CLoadAngFile::GetInstance();
 	CLoadImages* pLoadImages = CLoadImages::GetInstance();
@@ -25,6 +26,7 @@ bool CProcessMain::DoIt(void)
 	//---------------------------
 	cudaSetDevice(pInput->m_iGpuID);
 	//---------------------------
+	pSeaRanges->Setup();
 	pLoadAngFile->DoIt();
 	pInputFolder->ReadFiles();
 	pLoadImages->AsyncLoad();

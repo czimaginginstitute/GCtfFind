@@ -1,5 +1,4 @@
 #include "CFindCTFInc.h"
-#include <CuUtilFFT/GFFT2D.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -38,6 +37,20 @@ static __global__ void mGLogrithm
 	if(y >= iSizeY) return;
 	int i = y * gridDim.x + blockIdx.x;
 	gfSpectrum[i] = logf(gfSpectrum[i]);
+}
+
+static __global__ void mGApplyRamp
+(	float* gfHalfSpect,
+	int iCmpY
+)	
+{	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	if(y >= iCmpY) return;
+	int i = y * gridDim.x + blockIdx.x;
+	//---------------------------
+	float fX = blockIdx.x / (gridDim.x - 1.0f);
+	float fY = (y - 0.5f * iCmpY) / iCmpY * 2.0f;
+	float fW = sqrtf(fX * fX + fY * fY);
+	gfHalfSpect[i] *= fW;
 }
 
 //------------------------------------------------------------------------------
@@ -92,7 +105,7 @@ void GCalcSpectrum::DoPad
 	float* gfSpectrum,
 	int* piPadSize
 )
-{	CuUtilFFT::GFFT2D aGFFT2D;
+{	GFFT2D aGFFT2D;
 	int aiFFTSize[] = {0, piPadSize[1]};
 	aiFFTSize[0] = (piPadSize[0] / 2 - 1) * 2;
 	aGFFT2D.CreatePlan(aiFFTSize, true);
@@ -113,6 +126,21 @@ void GCalcSpectrum::Logrithm
 	mGLogrithm<<<aGridDim, aBlockDim>>>(gfSpectrum, piSize[1]);
 }
 
+void GCalcSpectrum::ApplyRamp
+(	float* gfHalfSpect,
+	int* piCmpSize
+)
+{	dim3 aBlockDim(1, 512);
+        dim3 aGridDim(piCmpSize[0], piCmpSize[1]/aBlockDim.y+1);
+        mGApplyRamp<<<aGridDim, aBlockDim>>>(gfHalfSpect, piCmpSize[1]);
+}
+
+//--------------------------------------------------------------------
+// 1. Calculate the centered full spectrum from a half spectrum
+//    centered at (0, Ny/2).
+// 2. The full spectrum is padded (Nx + 2) to facilitate further
+//    Fourier transform for LPP.
+//--------------------------------------------------------------------
 void GCalcSpectrum::GenFullSpect
 (	float* gfHalfSpect, 
 	int* piCmpSize,

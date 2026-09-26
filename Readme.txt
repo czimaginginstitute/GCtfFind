@@ -87,3 +87,149 @@ Changes:
    beyond 3.5A, cap it at 3.5A.
 2. FindCtf/CFindDefocus2D: reduced the B-factor from 100 to 16 to include
    more high-res Thon rings into correlation.
+
+Version 1.1.3 [05-16-2025]
+--------------------------
+Bug Fix:
+1. FindCtf/GSpectralCC2D: Because of the changes in GCalcCTF2D, we should
+   correlate |CTF| - 0.5 with background subtracted amplitude spectrum.
+Changes:
+1. Added Thon ring resolution output both on screen and into file.
+
+Version 1.1.4 [12-04-2025]
+--------------------------
+Bug Fix:
+Changes:
+1. Separate astigmatism determination from defocus and phase shift 
+   determination. They are implemented in FindCTF/GAstRatio.cu and 
+   FindCTF/GAstAngle.cu
+2. Iterative refinement of phase shift is constrained within the user
+   specified range.
+
+Version 1.1.5 [02-07-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. Change the makefile to support Cuda 13
+
+Version 1.1.6 [02-17-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. CFindCtf2D::mDoIt: Refine astigmatism angle before the ratio. This is because
+   when the angle is not correct, the ratio refinement does not approach closer
+   to the correct value.
+2. Add -AstRange to let choose the search range for astigmatism ratio.
+
+Version 1.1.7 [05-18-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. GSpectralCC2D.cu: Searching the shell from right to find the shell that
+   hits 0.143. In the meantime, the implementation checks if the CC goes up
+   after that hit.
+2. Added Lpp folder where the xLpp handling code stays.
+3. Added makefile12 for Cuda 12. Removed makefile and makefile10
+
+Version 1.1.8 [07-08-2026]
+--------------------------
+Bug Fix:
+1. Fixed makefile12 and makefile13 to reflect the changes in directory
+   structure listed in Changes 1 and 2.
+Changes:
+1. Removed Lib folder and added LibSrc folder containing the source code
+   of Mrcfile and Util modules. 
+2. Removed Include folder containing the header files for Mrcfile and Util
+   modules. LibSrc contains the Include folder.
+3. Removed the dependency on CuUtilFFT. Put GFFT1D.cu and GFFT2D.cu in
+   Util directory. GCtfFind does not contain any binary files needed
+   to generate the executable.
+4. 1) Users can specify the search range for defocus, astigmatism
+   amplitude, orientation, and extra phase shift using -Defocus, -AstRatio,
+   -AstAngle, and -ExtPhase. 2) Each of them takes two values as input, the
+   central value and the search range separated by a white space. 3) If the
+   range is set to zero, the central value will not be refined. 4) If the
+   range is given, the refinement will not go beyond that range.
+5. Users can specify a search range for defocus that falls into overfocus
+   domain.  
+
+Version 1.2.0 [07-10-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. Added revised user manuals.
+
+Version 1.2.1 [07-13-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. FindCTF/CFindCtfBase.cpp: The low resolution has been changed to 22A at
+   1A pixel size.
+2. Important: FindCTF/GRmBackground2D.cu: The box size has been changed to
+   match the low resolution setting. (int iBoxSize = fMinFreq * iCmpY;)
+   This change masked a larger low-frequency disk, resulting in more
+   robust correlation against the theoretical CTF.
+3. FindCTF/CFindDefocus2D.cpp The B-factor has been changed to 5 from 25.
+   This change increases weights on high-frequency components.
+
+Version 1.2.2 [07-24-2026]
+--------------------------
+Bug Fix:
+1. The astigmatic angle from inital estimation can be outside the user
+   specified range. The fix is to add 180 degree to or subtract it from
+   from the initial estimate to make it in the user specified range.
+Changes:
+1. FindCtf/CRescaleImage: changed the new pixel size to 1.5A to balance
+   between high mag data collected with high defocus and low-mag data
+   at low defocus.
+
+Version 1.2.3 [07-28-2026]
+--------------------------
+Bug Fix:
+Changes:
+1. FindCTF/CFindCtfBase.cpp: removed mLowpass because adding a lowpass
+   filter changed the envelope of the amplitude spectrum.
+2. FindCTF: Added GEstBFactor1D.cu to estimate the B-Factor used to
+   the theoretical CTF during its correlation with the spectrum. The
+   estimated B-factor is used for both 1D and 2D correlation in GCC1D.cu
+   and GCC2D.cu
+3. FindCTF: CRescaleImage.cpp: changed the final pixel size to 1.3A from 1.2A.
+
+Version 1.2.4 [09-04-2026]
+--------------------------
+General:
+1. Explore initial estimation of astigmatism
+2. Exclude ice ring at 3.7A in the CTF estimation.
+3. Explore sector averaged profile.
+Changes:
+1. For 1D estimation, exclude ice ring at [3.9A, 3.4A]. CFindDefocus1D and
+   GCC1D yields much closer 1D estimate with respect to 2D estimate.
+2. For 2D estimation, exclude ice ring at [3.52A, 3.48A]. Reason: at 3.9A
+   the structural Thon ring signals are still significant as opposed to 
+   ice rings, which are, although strong, fragmented.
+3. Util/GFtResize.cu: normalize the spectrum before resizing it.
+4. Revised GAstAngle.cu. The covariance is absolute intensity weighted.
+5. Added makefile13
+6. Revised GSpectralCC2D.cu for the determination of the Thon ring resolution.
+
+Version 1.2.5 [09-08-2026]
+--------------------------
+General:
+1. Detect whether there are ice rings in micrographs.
+Changes:
+1. FindCTF/GDetectIce1D.cu: Detect ice ring band in 1D radial average.
+2. Modified GEstBFactor1D.cu, GCC1D.cu, GCC2D.cu to exclude ice ring bands
+3. FindCTF/CFitParam.cpp: Buffer the parameters needed CTF fitting.
+Bugs:
+
+Version 1.2.6 [09-10-2026]
+--------------------------
+General:
+1. Implement a gradient decent to further refine the CTF estimate. It is found
+   the fitting on high-defocus micrographs has noticeable error.
+Changes:
+1. Added Util/CPowell.cpp for conjugate gradient optimization.
+2. Added FindCtf/CCGradient.cpp for refining CTF parameters using conjugate
+   gradient.
+Bug fix:
+1. Fixed CPowell.cpp's bug that could cause NaN due to 0/0.

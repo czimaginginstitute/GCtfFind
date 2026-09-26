@@ -21,13 +21,14 @@ static __global__ void mGTruncate
 	}
 	//---------------------------
 	int iIn = y * iCmpSizeInX + blockIdx.x;
+	float fScale = 1.0f / (iCmpSizeInX * iCmpSizeInY);
 	if(bSum)
-	{	gCmpOut[iOut].x += gCmpIn[iIn].x;
-		gCmpOut[iOut].y += gCmpIn[iIn].y;
+	{	gCmpOut[iOut].x += gCmpIn[iIn].x * fScale;
+		gCmpOut[iOut].y += gCmpIn[iIn].y * fScale;
 	}
 	else
-	{	gCmpOut[iOut].x = gCmpIn[iIn].x;
-		gCmpOut[iOut].y = gCmpIn[iIn].y;
+	{	gCmpOut[iOut].x = gCmpIn[iIn].x * fScale;
+		gCmpOut[iOut].y = gCmpIn[iIn].y * fScale;
 	}
 }
 
@@ -41,14 +42,14 @@ static __global__ void mGExpand
 {	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	if(y >= iCmpSizeInY) return;
 	int iIn = y * gridDim.x + blockIdx.x;
-	//--------------------
-	if(y > (iCmpSizeInY / 2))
-	{	y = y - iCmpSizeInY + iCmpSizeOutY;
-	}
-	//---------------------
+	//--------------------------
+	int iHalfInY = iCmpSizeInY / 2;
+	if(y > iHalfInY) y = y - iCmpSizeInY + iCmpSizeOutY;
 	int iOut = y * iCmpSizeOutX + blockIdx.x;
-	gCmpOut[iOut].x = gCmpIn[iIn].x;
-	gCmpOut[iOut].y = gCmpIn[iIn].y;
+	//--------------------------
+	float fScale = 1.0f / (gridDim.x * iCmpSizeInY);
+	gCmpOut[iOut].x = gCmpIn[iIn].x * fScale;
+	gCmpOut[iOut].y = gCmpIn[iIn].y * fScale;
 }
 
 GFtResize2D::GFtResize2D(void)
@@ -162,7 +163,8 @@ void GFtResize2D::UpSample
 	dim3 aGridDim(piSizeIn[0], 1);
 	aGridDim.y = (piSizeIn[1] + aBlockDim.y - 1) / aBlockDim.y;
 	//---------------------------
-	mGExpand<<<aGridDim, aBlockDim, 0, stream>>>(gCmpIn, piSizeIn[1],
+	mGExpand<<<aGridDim, aBlockDim, 0, stream>>>(
+	   gCmpIn, piSizeIn[1],
 	   gCmpOut, piSizeOut[0], piSizeOut[1]);
 }
 

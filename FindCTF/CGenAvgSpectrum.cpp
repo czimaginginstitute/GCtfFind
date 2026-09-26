@@ -1,7 +1,6 @@
 #include "CFindCTFInc.h"
 #include "../Util/CUtilInc.h"
 #include "../MrcUtil/CMrcUtilInc.h"
-#include <CuUtilFFT/GFFT2D.h>
 #include <math.h>
 #include <stdio.h>
 #include <memory.h>

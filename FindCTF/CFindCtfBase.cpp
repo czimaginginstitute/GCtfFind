@@ -2,7 +2,6 @@
 #include "../CMainInc.h"
 #include "../Util/CUtilInc.h"
 #include "../MrcUtil/CMrcUtilInc.h"
-#include <CuUtilFFT/GFFT2D.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,7 +17,6 @@ CFindCtfBase::CFindCtfBase(void)
 	m_fDfMax = 0.0f;
 	m_fAstAng = 0.0f;
 	m_fExtPhase = 0.0f;
-	m_fPhaseRange = 0.0f;
 	m_fScore = 0.0f;
 	m_fPixSize = 1.0f;
 	mInitPointers();
@@ -63,9 +61,12 @@ void CFindCtfBase::Setup1(CCTFTheory* pCtfTheory)
 	//---------------------------
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
 	m_fPixSize = pCtfParam->m_fPixelSize;
-	m_afResRange[0] = 25.0f * m_fPixSize;
-        m_afResRange[1] = (2.0f * m_fPixSize) / 0.8f;
-	if(m_afResRange[1] < 3.5f) m_afResRange[1] = 3.5f;
+	m_afResRange[0] = 20.0f * m_fPixSize;
+        m_afResRange[1] = (2.0f * m_fPixSize) / 0.75f;
+	//---------------------------
+	CFitParam* pFitParam = CFitParam::GetInstance();
+	pFitParam->m_afResRange[0] = m_afResRange[0];
+	pFitParam->m_afResRange[1] = m_afResRange[1];
 }
 
 void CFindCtfBase::Setup2(int* piImgSize)
@@ -73,12 +74,6 @@ void CFindCtfBase::Setup2(int* piImgSize)
 	m_aiImgSize[0] = piImgSize[0];
 	m_aiImgSize[1] = piImgSize[1];
 	m_pGenAvgSpect->SetSizes(m_aiImgSize, m_aiCmpSize[1]);
-}
-
-void CFindCtfBase::SetPhase(float fInitPhase, float fPhaseRange)
-{
-	m_fExtPhase = fInitPhase;
-	m_fPhaseRange = fPhaseRange;
 }
 
 void CFindCtfBase::SetHalfSpect(float* pfCtfSpect)
@@ -113,21 +108,38 @@ void CFindCtfBase::GenHalfSpectrum(float* gfPadImg)
 	//---------------------------
 	m_pGenAvgSpect->DoIt(gfPadImg, m_gfRawSpect, bLogSpect);
 	mRemoveBackground();
+	//mLowpass();
 }
 
-float* CFindCtfBase::GenFullSpectrum(void)
+void CFindCtfBase::GenFullSpectrum(void)
 {
 	float fAstRad = m_fAstAng * 0.017453f;
         m_pCtfTheory->SetDefocus(m_fDfMin, m_fDfMax, fAstRad);
 	m_pCtfTheory->SetExtPhase(m_fExtPhase, true);
-	//-------------------------------------------
-	CSpectrumImage spectrumImage;
-	spectrumImage.DoIt(m_gfCtfSpect, m_gfRawSpect, m_aiCmpSize,
-	   m_pCtfTheory, m_afResRange, m_gfFullSpect);
-	//--------------------------------------------
-	int iPixels = (m_aiCmpSize[0] - 1) * 2 * m_aiCmpSize[1];
-	float* pfFullSpect = new float[iPixels];
-	cudaMemcpy(pfFullSpect, m_gfFullSpect, iPixels * sizeof(float),
+	//---------------------------
+	GCalcSpectrum calcSpect;
+	bool bFullPadded = true;
+	calcSpect.GenFullSpect(m_gfCtfSpect, m_aiCmpSize,
+	   m_gfFullSpect, !bFullPadded);
+}
+
+float* CFindCtfBase::EmbedCTF(void)
+{	
+	float fAstRad = m_fAstAng * 0.017453f;
+        m_pCtfTheory->SetDefocus(m_fDfMin, m_fDfMax, fAstRad);
+        m_pCtfTheory->SetExtPhase(m_fExtPhase, true);
+	//---------------------------
+	int aiFullSize[] = {(m_aiCmpSize[0] - 1) * 2, m_aiCmpSize[1]};
+	float* gfFullSpect = CSimpleFuncs::GAllocFloat(aiFullSize);
+	int iFullSize = aiFullSize[0] * aiFullSize[1];
+	cudaMemcpy(gfFullSpect, m_gfFullSpect, sizeof(float) 
+	   * iFullSize, cudaMemcpyDefault);
+	//---------------------------
+	CEmbedCTF embedCTF;
+	embedCTF.DoIt(gfFullSpect, aiFullSize, m_pCtfTheory, m_afResRange);
+	//---------------------------
+	float* pfFullSpect = new float[iFullSize];
+	cudaMemcpy(pfFullSpect, gfFullSpect, iFullSize * sizeof(float),
 	   cudaMemcpyDefault);
 	return pfFullSpect;
 }
@@ -163,23 +175,7 @@ void CFindCtfBase::mRemoveBackground(void)
 	GRmBackground2D rmBackground;
 	rmBackground.DoIt(m_gfRawSpect, m_gfCtfSpect, bLogSpect,
 	   m_aiCmpSize, fMinRes);
-	//--------------------------------------------
-	// do not threshold if the spectrum is flat.
-	//--------------------------------------------
-	GCalcMoment2D calcMoment2D;
-	calcMoment2D.SetSize(m_aiCmpSize, false);
-	float fMean = calcMoment2D.DoIt(m_gfCtfSpect, 1, true);
-	float fStd = calcMoment2D.DoIt(m_gfCtfSpect, 2, true);
-	fStd = fStd - fMean * fMean;
-	if(fStd < 1.0f) return;
-	//-----------------	
-	fStd = (float)sqrtf(fStd);
-	float fMin = fMean - 1.0f * fStd;
-	float fMax = fMean + 1.0f * fStd;
-	GThreshold2D threshold2D;
-	//threshold2D.DoIt(m_gfCtfSpect, fMin, fMax, m_aiCmpSize, false);
-	//-----------------
-	mLowpass();
+	//---------------------------
 	/*	
 	CSaveImages saveImages;
 	saveImages.OpenFile("/home/shawn.zheng/Temp/TestRm.mrc");
@@ -195,7 +191,7 @@ void CFindCtfBase::mLowpass(void)
 	calcSpectrum.GenFullSpect(m_gfCtfSpect, m_aiCmpSize,
 	   m_gfFullSpect, bFullPadded);
 	//-----------------
-	CuUtilFFT::GFFT2D aGFFT2D;
+	GFFT2D aGFFT2D;
 	int aiFFTSize[] = {(m_aiCmpSize[0] - 1) * 2, m_aiCmpSize[1]};
 	aGFFT2D.CreatePlan(aiFFTSize, true);
 	aGFFT2D.Forward(m_gfFullSpect, true);

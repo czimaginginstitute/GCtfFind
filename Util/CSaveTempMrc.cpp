@@ -17,16 +17,26 @@ CSaveTempMrc::~CSaveTempMrc(void)
 void CSaveTempMrc::SetFile(char* pcMain, char* pcExt)
 {
 	memset(m_acMrcFile, 0, sizeof(m_acMrcFile));
-	if(pcMain == 0L || pcExt == 0L) return;
-	//-------------------------------------
-	char acBuf[256];
-	strcpy(acBuf, pcMain);
-	char* pcTok = strtok(acBuf, ".");
-	if(pcTok == 0L) return;
-	//---------------------
-	strcpy(m_acMrcFile, pcTok);
-	strcat(m_acMrcFile, pcExt);
-	strcat(m_acMrcFile, ".mrc");
+	if(pcMain == 0L) return;
+	//---------------------------
+	strcpy(m_acMrcFile, pcMain);
+	if(pcExt != 0L && strlen(pcExt) > 0)
+	{	char acBuf[128];
+		strcpy(acBuf, pcExt);
+		char* pcMrc = strstr(acBuf, ".mrc");
+		if(pcMrc == 0L) strcat(acBuf, ".mrc");
+		strcat(m_acMrcFile, acBuf);
+	}
+	else
+	{	char* pcDot = strrchr(m_acMrcFile, '.');
+		if(pcDot == 0L)
+		{	strcat(m_acMrcFile, ".mrc");
+		}
+		else
+		{	char* pcMrc = strstr(pcDot, ".mrc");
+			if(pcMrc == 0L) strcat(m_acMrcFile, ".mrc");
+		}
+	}
 }
 
 void CSaveTempMrc::GDoIt(float* gfImg, int* piSize)
@@ -105,3 +115,23 @@ void CSaveTempMrc::DoIt(void* pvImg, int iMode, int* piSize)
 	delete[] pfBuf;
 }	
 
+void CSaveTempMrc::DoStack
+(	float** ppfImgs, 
+	int* piImgSize,
+	int iNumImgs
+)
+{	Mrc::CSaveMrc saveMrc;
+        if(!saveMrc.OpenFile(m_acMrcFile)) return;
+	if(ppfImgs == 0L) return;
+	if(iNumImgs <= 0) return;
+	//---------------------------
+	saveMrc.SetMode(Mrc::eMrcFloat);
+	saveMrc.SetImgSize(piImgSize, iNumImgs, 1, 1.0f);
+	saveMrc.SetExtHeader(0, 32, 0);
+	saveMrc.m_pSaveMain->DoIt();
+	//---------------------------
+	for(int i=0; i<iNumImgs; i++)
+	{	saveMrc.m_pSaveImg->DoIt(i, ppfImgs[i]);
+	}
+	saveMrc.CloseFile();
+}

@@ -15,43 +15,101 @@ public:
 	~CInput(void);
 	void ShowTags(void);
 	void Parse(int argc, char* argv[]);
+	void GetOutFile
+	( const char* pcMrcFile, 
+	  const char* pcSuffix,
+	  char* acOutFile
+	);
+	//---------------------------
 	char m_acInMrcFile[256];
-	char m_acOutMrcFile[256];
-	char m_acOutCtfFile[256];
+	char m_acOutDir[256];
 	char m_acAngFile[256];
 	char m_acInSuffix[256];
+	char m_acInSkips[256];
+	//---------------------------
 	float m_fKv;
 	float m_fCs;
 	float m_fAmpContrast;
 	float m_fPixSize;
+	//---------------------------
+	float m_afDefocus[2];
+	float m_afAstRatio[2];
+	float m_afAstAngle[2];
 	float m_afExtPhase[2];
+	//---------------------------
 	float m_afTiltRange[2];
 	int m_iTileSize;
 	int m_iLogSpect;
 	int m_iGpuID;
 	int m_iSerial;
-
 private:
 	CInput(void);
 	void mPrint(void);
 	int m_argc;
 	char** m_argv;
 	char m_acInMrcTag[32];
-	char m_acOutMrcTag[32];
-	char m_acOutCtfTag[32];
+	char m_acInSuffixTag[32];
+	char m_acInSkipsTag[32];
+	char m_acSerialTag[32];
+	//---------------------------
+	char m_acOutDirTag[32];
 	char m_acAngFileTag[32];
+	//---------------------------
 	char m_acTiltRangeTag[32];
 	char m_acKvTag[32];
 	char m_acCsTag[32];
 	char m_acAmpContrastTag[32];
 	char m_acPixelSizeTag[32];
+	//---------------------------
+	char m_acDefocusTag[32];
+	char m_acAstRatioTag[32];
+	char m_acAstAngleTag[32];
 	char m_acExtPhaseTag[32];
+	//---------------------------
 	char m_acTileSizeTag[32];
 	char m_acLogSpectTag[32];
-	char m_acSerialTag[32];
-	char m_acInSuffixTag[32];
 	char m_acGpuIDTag[32];
 	static CInput* m_pInstance;
+};
+
+class CSearchRanges
+{
+public:
+	static CSearchRanges* GetInstance(void);
+	static void DeleteInstance(void);
+	~CSearchRanges(void);
+	void Setup(void);
+	//---------------------------
+	void GetDefocus(float* pfRange);
+	void GetAstRatio(float* pfRange);
+	void GetAstAngle(float* pfRange);
+	void GetExtPhase(float* pfRange);
+	//---------------------------
+	float GetDefocus(bool bCentVal);  // central value or range
+	float GetAstRatio(bool bCentVal);
+	float GetAstAngle(bool bCentVal);
+	float GetExtPhase(bool bCentVal);
+	//---------------------------
+	bool bDefocus(void);
+	bool bAstRatio(void);
+	bool bAstAngle(void);
+	bool bExtPhase(void);
+	//---------------------------
+	void CheckDefocus(float* pfDfRange);
+	void CheckAstRatio(float* pfAstRatioRange);
+	void CheckAstAngle(float* pfAstAngleRange);
+	void CheckExtPhase(float* pfExtPhaseRange);
+private:
+	CSearchRanges(void);
+	void mSetDfRange(void);
+	void mSetAstRange(void);
+	void mSetPhaseRange(void);
+	//---------------------------
+	float m_afDefocus[2];
+	float m_afAstRatio[2];
+	float m_afAstAngle[2];
+	float m_afExtPhase[2];
+	static CSearchRanges* m_pInstance;
 };
 
 class CCtfPackage
@@ -61,19 +119,24 @@ public:
 	~CCtfPackage(void);
 	void Clean(void);
 	void CleanSpects(void);
-	char m_acMrcFileName[256];
+	void GetMrcFile(char* pcMrcFile);
+	//---------------------------
+	char m_acMrcFileName[512];
 	int m_iImgIdx; 
 	float m_fTilt;
 	float* m_pfImage;
 	int m_aiImgSize[2];
-	float* m_pfHalfSpect;
 	float* m_pfFullSpect;
 	int m_aiSpectSize[2];
+	//---------------------------
 	float m_fDfMin;
 	float m_fDfMax;
 	float m_fAzimuth;
 	float m_fExtPhase;
 	float m_fScore;
+	float m_fCtfRes;
+	float m_afLpp1[2];
+	float m_afLpp2[2];
 };
 
 class CInputFolder
@@ -100,10 +163,13 @@ private:
 	bool mOpenDir(void);
 	bool mGetDirName(void);
 	bool mGetSerial(char* pcFullName, char* pcSerial);
+	bool mCheckSkips(const char* pcString);
 	void mClean(void);
+	//---------------------------
 	char m_acDirName[256];
 	char m_acPrefix[256];
 	char m_acSuffix[256];
+	char m_acInSkips[256];
 	CCtfPackage** m_ppPackages;
 	int m_iNumPackages;
 	int m_iZeroTilt;
@@ -136,6 +202,7 @@ public:
 	void DoIt(void);
 private:
 	CFindSeriesCtfs(void);
+	void mTestLpp(int iPackage);
 	void mRescaleImage(int iPackage);
 	void mSetupFindCtf(void);
 	void mProcessPackage(int iPackage);

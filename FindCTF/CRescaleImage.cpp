@@ -1,7 +1,6 @@
 #include "CFindCTFInc.h"
 #include "../Util/CUtilInc.h"
 #include "../MrcUtil/CMrcUtilInc.h"
-#include <CuUtilFFT/GFFT2D.h>
 #include <math.h>
 #include <stdio.h>
 #include <memory.h>
@@ -52,22 +51,23 @@ void CRescaleImage::Setup(int* piRawSize, float fRawPixSize)
 	m_fRawPixSize = fRawPixSize;
 	//---------------------------
 	m_fBinning = 1.2f / fRawPixSize;
-	if(m_fBinning <= 1) m_fBinning = 1.0f;
+	if(m_fBinning <= 1.05) m_fBinning = 1.05f;
 	m_fPixSizeN = m_fRawPixSize * m_fBinning;
 	//---------------------------
 	m_aiNewSize[0] = (int)(m_aiRawSize[0] / m_fBinning + 0.5f);
-	m_aiNewSize[1] = (int)(m_aiRawSize[1] / m_fBinning + 0.5f);
 	m_aiNewSize[0] = m_aiNewSize[0] / 2 * 2;
-	m_aiNewSize[1] = m_aiNewSize[1] / 2 * 2;
+	m_fBinning = m_aiRawSize[0] / (float)m_aiNewSize[0];
+	m_fPixSizeN = m_fBinning * m_fRawPixSize;
+	//---------------------------
+	m_aiNewSize[1] = (int)(m_aiRawSize[1] / m_fBinning + 0.5f) / 2 * 2;
 	//---------------------------
 	m_aiPadSizeN[0] = (m_aiNewSize[0] / 2 + 1) * 2;
 	m_aiPadSizeN[1] = m_aiNewSize[1];
+	m_fPixSizeN = (m_fRawPixSize * m_aiRawSize[0]) / m_aiNewSize[0]; 
 	//---------------------------
 	bool bPad = true, bCmp = true;
-	if(m_fBinning > 1)
-	{	m_pForFFT->CreateForwardPlan(m_aiRawSize, !bPad);
-		m_pInvFFT->CreateInversePlan(m_aiNewSize, !bCmp);
-	}
+	m_pForFFT->CreateForwardPlan(m_aiRawSize, !bPad);
+	m_pInvFFT->CreateInversePlan(m_aiNewSize, !bCmp);
 	//---------------------------
 	int iBytes = sizeof(float) * m_aiPadSizeN[0] * m_aiPadSizeN[1];
 	cudaMalloc(&m_gfPadImgN, iBytes);
@@ -92,9 +92,54 @@ void CRescaleImage::DoIt(float* pfImage)
 	bool bSum = true;
 	int aiSizeIn[] = {m_aiRawSize[0] / 2 + 1, m_aiRawSize[1]};
 	int aiSizeOt[] = {m_aiNewSize[0] / 2 + 1, m_aiNewSize[1]};
-	gFtResize.DownSample(gCmpRaw, aiSizeIn, gCmpNew, aiSizeOt, !bSum);
-	m_pInvFFT->Inverse(gCmpNew);
+	if(m_fBinning > 1)
+	{	gFtResize.DownSample(gCmpRaw, aiSizeIn, gCmpNew, aiSizeOt, !bSum);
+		m_pInvFFT->Inverse(gCmpNew);
+	}
+	//---------------------------
+	if(gCmpRaw != 0L) cudaFree(gCmpRaw);
+
+	/*
+	char acTmpMrc[256] = {'\0'};
+        CInput* pInput = CInput::GetInstance();
+        pInput->GetOutFile("RescaledImg", ".mrc", acTmpMrc);
+        CSaveTempMrc saveTempMrc;
+        saveTempMrc.SetFile(acTmpMrc, 0L);
+        saveTempMrc.GDoIt(m_gfPadImgN, m_aiPadSizeN);
+	*/
+}
+
+/*
+void CRescaleImage::DoRealSpace(float* pfImage)
+{
+	int iRawSize = m_aiRawSize[0] * m_aiRawSize[1];
+	float* gfRawImg = 0L;
+	cudaMalloc(&gfRawImg, iRawSize * sizeof(float));
+	cudaMemcpy(gfRawImg, pfImage, iRawSize * sizeof(float),
+	   cudaMemcpyDefault);
+	//---------------------------
+	GRealResize2D realResize2D;
+	realResize2D.DoIt(gfRawImg, m_aiRawSize, false,
+	   m_gfPadImgN, m_aiPadSizeN, true,
+	   false, (cudaStream_t)0); // not summing
+	cudaStreamSynchronize((cudaStream_t)0);
+	if(gfRawImg != 0L) cudaFree(gfRawImg);
+}
+
+void CRescaleImage::mDoFFT(float* pfImage)
+{
+	cufftComplex* gCmpRaw = m_pForFFT->ForwardH2G(pfImage);
+	cufftComplex* gCmpNew = (cufftComplex*)m_gfPadImgN;
+	//---------------------------
+	GFtResize2D gFtResize;
+	bool bSum = true;
+	int aiSizeIn[] = {m_aiRawSize[0] / 2 + 1, m_aiRawSize[1]};
+	int aiSizeOt[] = {m_aiNewSize[0] / 2 + 1, m_aiNewSize[1]};
+	if(m_fBinning > 1)
+	{       gFtResize.DownSample(gCmpRaw, aiSizeIn, gCmpNew, aiSizeOt, !bSum);
+		m_pInvFFT->Inverse(gCmpNew);
+	}
 	//---------------------------
 	if(gCmpRaw != 0L) cudaFree(gCmpRaw);
 }
-
+*/
