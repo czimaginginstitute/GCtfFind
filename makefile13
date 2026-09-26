@@ -40,6 +40,7 @@ CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
         ./CSearchRanges.cpp \
+	./Util/CPowell.cpp \
 	./Util/CSimpleFuncs.cpp \
 	./Util/CPad2D.cpp \
 	./Util/CParseArgs.cpp \
@@ -61,6 +62,7 @@ SRCS = ./CInput.cpp \
 	./FindCTF/CEmbedCTF.cpp \
 	./FindCTF/CFindDefocus1D.cpp \
 	./FindCTF/CFindDefocus2D.cpp \
+	./FindCTF/CCGradient.cpp \
 	./FindCTF/CFindCtf1D.cpp \
 	./FindCTF/CFindCtf2D.cpp \
 	./FindCTF/CFindCtfBase.cpp \

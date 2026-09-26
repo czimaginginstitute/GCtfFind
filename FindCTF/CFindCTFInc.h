@@ -598,7 +598,7 @@ public:
 	float GetScore(void);
 	float GetCtfRes(void);   // angstrom
 private:
-	float mCalcMetric
+	float mGridSearch
 	( float* pfDfRange, 
 	  float* pfPhaseRange
 	);
@@ -623,6 +623,36 @@ private:
 	//----------------------------------------
 	float m_afNewParam[6];
 	float m_afOldParam[6];
+};
+
+class CCGradient : public CPowell
+{
+public:
+	CCGradient(void);
+	virtual ~CCGradient(void);
+	void Clean(void);
+	void SetCtfParam(CCTFParam* pCtfParam);
+	void SetSpect(float* gfSpect, int* piCmpSize);
+	//---------------------------
+	float DoIt
+	( float* pfInitPoint,
+	  float* pfSearchRange,
+	  int iNumSteps
+	);
+	float Eval(float* pfPoint);
+	//---------------------------
+	float GetDfMin(void); // angstrom
+	float GetDfMax(void); // angstrom
+	float GetAstAngle(void); // degree
+	float GetExtPhase(void); // degree
+private:
+	float* m_gfCtf2D;
+	float* m_gfSpect;
+	float* m_pfScales;
+	GCalcCTF2D m_aGCalcCtf2D;
+	GCC2D* m_pGCC2D;
+	CCTFParam* m_pCtfParam;
+	int m_aiCmpSize[2];
 };
 
 class CFindCtfBase
@@ -708,6 +738,7 @@ private:
 	  float fPhaseRange,
 	  int iIterations
 	);
+	void mCGRefine(void);
 	void mEstAstigmatism(void);
 	void mGetResults(void);
 	//---------------------------

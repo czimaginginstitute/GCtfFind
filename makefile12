@@ -34,11 +34,13 @@ CUSRCS = ./Util/GAddImages.cu \
 	 ./FindCTF/GCC2D.cu \
 	 ./FindCTF/GAstRatio.cu \
 	 ./FindCTF/GAstAngle.cu \
+	 ./FindCTF/GDetectIce1D.cu \
 	 ./FindCTF/GLowpass2D.cu
 CUCPPS = $(patsubst %.cu, %.cpp, $(CUSRCS))
 #------------------------------------------
 SRCS = ./CInput.cpp \
         ./CSearchRanges.cpp \
+	./Util/CPowell.cpp \
 	./Util/CSimpleFuncs.cpp \
 	./Util/CPad2D.cpp \
 	./Util/CParseArgs.cpp \
@@ -54,11 +56,13 @@ SRCS = ./CInput.cpp \
 	./MrcUtil/CAsyncSingleSave.cpp \
 	./FindCTF/CFindCtfHelp.cpp \
 	./FindCTF/CCTFTheory.cpp \
+	./FindCTF/CFitParam.cpp \
 	./FindCTF/CRescaleImage.cpp \
 	./FindCTF/CGenAvgSpectrum.cpp \
 	./FindCTF/CEmbedCTF.cpp \
 	./FindCTF/CFindDefocus1D.cpp \
 	./FindCTF/CFindDefocus2D.cpp \
+	./FindCTF/CCGradient.cpp \
 	./FindCTF/CFindCtf1D.cpp \
 	./FindCTF/CFindCtf2D.cpp \
 	./FindCTF/CFindCtfBase.cpp \
@@ -79,7 +83,6 @@ CC = g++
 CFLAG = -c -g -pthread -m64
 NVCC = $(CUDAHOME)/bin/nvcc -std=c++11
 CUFLAG = -Xptxas -dlcm=ca -O2 \
-	-gencode arch=compute_70,code=sm_70 \
 	-gencode arch=compute_75,code=sm_75 \
 	-gencode arch=compute_80,code=sm_80 \
 	-gencode arch=compute_86,code=sm_86 \

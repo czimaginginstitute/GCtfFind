@@ -114,7 +114,7 @@ void CFindDefocus2D::DoIt
 	float* pfPhaseRange
 )
 {	m_gfSpect = gfSpect;
-	mCalcMetric(pfDfRange, pfPhaseRange);
+	mGridSearch(pfDfRange, pfPhaseRange);
 }
 
 void CFindDefocus2D::RefineParam
@@ -199,7 +199,7 @@ void CFindDefocus2D::CalcCtfRes(float* gfSpect)
 	m_afNewParam[5] = m_aiCmpSize[1] * m_pCtfParam->m_fPixelSize / iShell;
 }
 
-float CFindDefocus2D::mCalcMetric
+float CFindDefocus2D::mGridSearch
 (	float* pfDfRange,
         float* pfPhaseRange
 )
@@ -230,8 +230,6 @@ float CFindDefocus2D::mCalcMetric
 		+ 0.99f / (m_afNewParam[5] + 0.0001f);
 	return fMetric;
 }
-
-
 
 float CFindDefocus2D::mCorrelate(void)
 {	

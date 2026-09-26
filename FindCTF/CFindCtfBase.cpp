@@ -61,7 +61,7 @@ void CFindCtfBase::Setup1(CCTFTheory* pCtfTheory)
 	//---------------------------
 	CCTFParam* pCtfParam = m_pCtfTheory->GetParam(false);
 	m_fPixSize = pCtfParam->m_fPixelSize;
-	m_afResRange[0] = 25.0f * m_fPixSize;
+	m_afResRange[0] = 20.0f * m_fPixSize;
         m_afResRange[1] = (2.0f * m_fPixSize) / 0.75f;
 	//---------------------------
 	CFitParam* pFitParam = CFitParam::GetInstance();
