@@ -109,8 +109,8 @@ void GEstBFactor1D::Setup
 	int iNumSteps      // number of searching steps
 )
 {	float afResRange[2] = {0.0f};
-	afResRange[0] = pfResRange[0];
-	afResRange[1] = pfResRange[1];
+	afResRange[0] = fPixSize / pfResRange[0];
+	afResRange[1] = fPixSize / pfResRange[1];
 	cudaMemcpyToSymbol(c_afResRange, afResRange, sizeof(float) * 2);
 	//---------------------------
 	float afIceRange[2] = {1.0f, 2.0f};

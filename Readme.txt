@@ -233,3 +233,5 @@ Changes:
    gradient.
 Bug fix:
 1. Fixed CPowell.cpp's bug that could cause NaN due to 0/0.
+2. Fixed a bug in FindCtf/GEstBFactor1D.cu: afResRange was not converted to
+   relative frequency, the estimated B-factor was always zero.

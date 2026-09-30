@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	else if(strstr(argv[1], "--version"))
-	{	printf("GCtfFind version 1.2.5, Sept 08, 2026\n");
+	{	printf("GCtfFind version 1.2.6, Sept 28, 2026\n");
 		return 0;
 	}
 	//---------------------------
